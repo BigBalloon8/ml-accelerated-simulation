@@ -1,132 +1,116 @@
-# navier_stokes_sim.py
-"""
-2‑D Incompressible Navier‑Stokes fluid simulation using PyTorch
-----------------------------------------------------------------
-This script evolves an incompressible velocity field on a regular grid
-with *semi‑Lagrangian advection*, *explicit viscosity* and a *Jacobi
-projection* step to enforce zero divergence:
-
-u*  = Advect(u)
-ū   = u*  + νΔu*  · dt            # diffusion
-u^{n+1}= ū − ∇p                  # projection (∇·u^{n+1}=0)
-
-For clarity and interactivity the code is intentionally compact:
-* A single convolution kernel expresses the Laplacian and gradients.
-* Grid‑sample handles back‑tracing for advection.
-* Matplotlib visualises speed magnitude every few steps.
-
-GPU acceleration is automatic when a CUDA device is available.
-"""
-
 import torch
-import torch.nn.functional as F
+from torch_cfd import grids, boundaries
+from torch_cfd.initial_conditions import filtered_velocity_field
+
+from torch_cfd.equations import stable_time_step
+from torch_cfd.fvm import RKStepper, NavierStokes2DFVMProjection
+from torch_cfd.forcings import KolmogorovForcing
+import torch_cfd.finite_differences as fdm
+
+from tqdm import tqdm
+
+import seaborn as sns
+import xarray
+import numpy as np
 import matplotlib.pyplot as plt
 
-# ─── Simulation parameters ────────────────────────────────────────────────────
-H, W         = 128, 128      # grid resolution
-DT           = 0.1           # time step
-VISCOSITY    = 0.0005        # kinematic viscosity ν
-STEPS        = 500           # simulation steps
-VIS_EVERY    = 10            # visualisation cadence
-DEVICE       = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# ─── Helper kernels (finite differences) ──────────────────────────────────────
-DX = 1.0  # cell size (uniform)
-_laplace = torch.tensor([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=torch.float32,
-                        device=DEVICE).view(1, 1, 3, 3) / (DX ** 2)
-_gradx   = torch.tensor([[-0.5, 0.0, 0.5]], dtype=torch.float32,
-                        device=DEVICE).view(1, 1, 1, 3) / DX
-_grady   = torch.tensor([[-0.5], [0.0], [0.5]], dtype=torch.float32,
-                        device=DEVICE).view(1, 1, 3, 1) / DX
+n = 256
+batch_size = 16
+density = 1.0
+max_velocity = 3.0
+peak_wavenumber = 4.0
+cfl_safety_factor = 0.5
+viscosity = 1e-3
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+torch.set_default_dtype(torch.float64)
+inner_steps = 20
+outer_steps = 100
+diam = 2 * torch.pi
 
 
-def laplacian(field: torch.Tensor) -> torch.Tensor:
-    """5‑point Laplacian Δfield"""
-    return F.conv2d(field, _laplace, padding=1)
 
 
-def gradient(scalar: torch.Tensor) -> torch.Tensor:
-    """∇scalar → tensor with two channels (dx, dy)"""
-    gx = F.conv2d(scalar, _gradx, padding=(0, 1))
-    gy = F.conv2d(scalar, _grady, padding=(1, 0))
-    return torch.cat([gx, gy], dim=1)
+grid = grids.Grid((n, n), domain=((0, diam), (0, diam)), device=device)
+
+v0 = filtered_velocity_field(
+    grid, max_velocity, peak_wavenumber, iterations=3, random_state=42,
+    device=device, batch_size=batch_size,)
+print(f"Initial velocity field:\n{v0.shape} {v0.dtype} {v0.device}")
+v0div = fdm.divergence(v0)
+pressure_bc = boundaries.get_pressure_bc_from_velocity(v0)
+
+print(f"divergence of initial velocity L2: {torch.linalg.norm(v0div).data:.2e}")
+
+dt = stable_time_step(
+    dx=min(grid.step),
+    max_velocity=max_velocity,
+    max_courant_number=cfl_safety_factor,
+    viscosity=viscosity,
+)
+print(f"dt: {dt} | batch size: {batch_size} | grid: {grid.shape}")
+step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
+forcing_fn = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
+    grid=grid, offsets=(v0[0].offset, v0[1].offset))
+
+ns2d = NavierStokes2DFVMProjection(
+    viscosity=viscosity,
+    grid=grid,
+    bcs=(v0[0].bc, v0[1].bc),
+    density=density,
+    drag=0.1,
+    forcing=forcing_fn,
+    solver=step_fn,
+    # set_laplacian=False,
+).to(v0.device)
 
 
-def divergence(vec: torch.Tensor) -> torch.Tensor:
-    """∇·vec (vec has two channels)"""
-    gx = F.conv2d(vec[:, 0:1], _gradx, padding=(0, 1))
-    gy = F.conv2d(vec[:, 1:2], _grady, padding=(1, 0))
-    return gx + gy
+
+v = v0
+trajectory = [[v0[0].data.detach().cpu().numpy()], [v0[1].data.detach().cpu().numpy()]]
+nan_count = 0
+
+with tqdm(total=outer_steps*inner_steps) as pbar:
+    with torch.no_grad():
+        for i in range(outer_steps):
+            for j in range(inner_steps):
+                v, p = step_fn.forward(v, dt, equation=ns2d)
+                if torch.isnan(v[0].data).any():
+                    print(f"NaN detected at {i*inner_steps + j}")
+                    nan_count += 1
+                    break
+            if nan_count > 0:
+                break
+            trajectory[0].append(v[0].data.detach().cpu().numpy())
+            trajectory[1].append(v[1].data.detach().cpu().numpy())
+            pbar.update(inner_steps)
 
 
-# ─── Core fluid operators ─────────────────────────────────────────────────────
+# GRAPHING
 
-def advect(field: torch.Tensor, velocity: torch.Tensor) -> torch.Tensor:
-    """Semi‑Lagrangian advection of *field* by *velocity*"""
-    B, C, H_, W_ = field.shape
-    y, x = torch.meshgrid(torch.arange(H_, device=DEVICE),
-                          torch.arange(W_, device=DEVICE), indexing="ij")
-    x = x.float().unsqueeze(0) - DT * velocity[:, 0]
-    y = y.float().unsqueeze(0) - DT * velocity[:, 1]
-    # Normalize to [-1,1] for grid_sample
-    x = (x / (W_ - 1)) * 2 - 1
-    y = (y / (H_ - 1)) * 2 - 1
-    grid = torch.stack((x, y), dim=-1)  # B × H × W × 2
-    return F.grid_sample(field, grid, mode="bilinear",
-                         padding_mode="border", align_corners=True)
+idxes = np.random.choice(np.arange(batch_size), size=3, replace=False)
 
+trajectory_plot = np.stack(trajectory).astype(np.float64)
 
-def diffuse(vec: torch.Tensor) -> torch.Tensor:
-    """Explicit viscosity (Forward‑Euler)"""
-    return vec + VISCOSITY * laplacian(vec) * DT
-
-
-def project(vec: torch.Tensor, iters: int = 40) -> torch.Tensor:
-    """Jacobi solve of Poisson eqn to enforce ∇·u = 0"""
-    p   = torch.zeros(vec.size(0), 1, H, W, device=DEVICE)
-    div = divergence(vec)
-    for _ in range(iters):
-        p = (laplacian(p) - div) * 0.25  # Jacobi iteration
-    grad_p = gradient(p)
-    return vec - grad_p  # u ← u − ∇p
+for idx in idxes:
+    coords={
+            "time": dt * inner_steps * np.arange(outer_steps),
+            "x": np.linspace(0, 2 * np.pi, n),
+            "y": np.linspace(0, 2 * np.pi, n),
+        }
+    ds = xarray.Dataset(
+        {
+            "u": (("time", "x", "y"), trajectory_plot[0, 1:, idx, ...]),
+            "v": (("time", "x", "y"), trajectory_plot[1, 1:, idx, ...]),
+        },
+        coords=coords,
+    )
 
 
-# ─── Initial condition: a small vortex in the centre ──────────────────────────
-vel = torch.zeros(1, 2, H, W, device=DEVICE)
-Y, X = torch.meshgrid(torch.arange(H), torch.arange(W), indexing="ij")
-X, Y = X.to(DEVICE).float(), Y.to(DEVICE).float()
-xc, yc = (W - 1) / 2, (H - 1) / 2
-r = torch.sqrt((X - xc) ** 2 + (Y - yc) ** 2)
-mask = r < 20.0
-vel[0, 0][mask] = -(Y[mask] - yc)  # u‑component (tangential)
-vel[0, 1][mask] = +(X[mask] - xc)  # v‑component
-vel *= 0.01  # scale magnitude
+    def vorticity(ds):
+        return (ds.v.differentiate("x") - ds.u.differentiate("y")).rename(f"vorticity of sample {idx}")
 
-# ─── Time integration loop ────────────────────────────────────────────────────
-plt.ion()
-fig, ax = plt.subplots(figsize=(5, 5))
-
-for step in range(STEPS):
-    # 1. Advect velocity by itself
-    vel = advect(vel, vel)
-
-    # 2. Diffusion / viscosity
-    vel = diffuse(vel)
-
-    # 3. Projection (pressure solve) to enforce incompressibility
-    vel = project(vel)
-
-    # 4. Visualise speed field every VIS_EVERY steps
-    if step % VIS_EVERY == 0:
-        speed = torch.sqrt((vel[0, 0] ** 2 + vel[0, 1] ** 2)).cpu()
-        ax.clear()
-        im = ax.imshow(speed, cmap="viridis", origin="lower")
-        ax.set_title(f"Step {step}")
-        ax.set_xticks([])
-        ax.set_yticks([])
-        plt.pause(0.001)
-
-plt.ioff()
-plt.show()
-
-# ── End of script ─────────────────────────────────────────────────────────────
+    (
+        ds.pipe(vorticity)
+        .thin(time=20)
+        .plot.imshow(col="time", cmap=sns.cm.icefire, robust=True, col_wrap=5)
+    )
