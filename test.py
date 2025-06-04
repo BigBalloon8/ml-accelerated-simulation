@@ -33,7 +33,7 @@ diam = 2 * torch.pi
 grid = grids.Grid((n, n), domain=((0, diam), (0, diam)), device=device)
 
 v0 = filtered_velocity_field(
-    grid, max_velocity, peak_wavenumber, iterations=3, random_state=42,
+    grid, max_velocity, peak_wavenumber, iterations=3, random_state=41,
     device=device, batch_size=batch_size,)
 print(f"Initial velocity field:\n{v0.shape} {v0.dtype} {v0.device}")
 v0div = fdm.divergence(v0)
@@ -52,6 +52,9 @@ step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype
 forcing_fn = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
     grid=grid, offsets=(v0[0].offset, v0[1].offset))
 
+print(f"Offsets: {v0[0].offset}, {v0[1].offset}")
+print(f"BC: {v0[0].bc}, {v0[1].bc}")
+
 ns2d = NavierStokes2DFVMProjection(
     viscosity=viscosity,
     grid=grid,
@@ -62,7 +65,6 @@ ns2d = NavierStokes2DFVMProjection(
     solver=step_fn,
     # set_laplacian=False,
 ).to(v0.device)
-
 
 
 v = v0
