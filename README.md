@@ -173,3 +173,4 @@ Through this example, we see how the finite difference Navier–Stokes solver ca
 * Barba, L. A. (2014). *CFD Python: 12 steps to Navier-Stokes.* (Educational notebooks illustrating a simple cavity flow solver using finite differences).
 * MIT OpenCourseWare 2.29 (2015). *Lecture 17: Pressure-Velocity Coupling.* (Discussion of collocated vs staggered grids in CFD).
 * Columbia University Mechanical Engineering (2016). *Finite Difference Solution of 2D Navier-Stokes (Lei).* (Project report using projection method on staggered grid).
++

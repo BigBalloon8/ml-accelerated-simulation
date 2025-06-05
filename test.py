@@ -116,3 +116,5 @@ for idx in idxes:
         .thin(time=20)
         .plot.imshow(col="time", cmap=sns.cm.icefire, robust=True, col_wrap=5)
     )
+
+    plt.show()
