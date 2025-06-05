@@ -21,9 +21,10 @@ max_velocity = 3.0
 peak_wavenumber = 4.0
 cfl_safety_factor = 0.5
 viscosity = 1e-3
+print(f"Cuda Available: {torch.cuda.is_available()}")
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 torch.set_default_dtype(torch.float64)
-inner_steps = 20
+inner_steps = 2
 outer_steps = 100
 diam = 2 * torch.pi
 
@@ -52,9 +53,6 @@ step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype
 forcing_fn = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
     grid=grid, offsets=(v0[0].offset, v0[1].offset))
 
-print(f"Offsets: {v0[0].offset}, {v0[1].offset}")
-print(f"BC: {v0[0].bc}, {v0[1].bc}")
-
 ns2d = NavierStokes2DFVMProjection(
     viscosity=viscosity,
     grid=grid,
@@ -71,6 +69,8 @@ v = v0
 trajectory = [[v0[0].data.detach().cpu().numpy()], [v0[1].data.detach().cpu().numpy()]]
 nan_count = 0
 
+
+print(v.shape)
 with tqdm(total=outer_steps*inner_steps) as pbar:
     with torch.no_grad():
         for i in range(outer_steps):
@@ -91,8 +91,10 @@ with tqdm(total=outer_steps*inner_steps) as pbar:
 
 idxes = np.random.choice(np.arange(batch_size), size=3, replace=False)
 
+print(trajectory[0][0].shape)
 trajectory_plot = np.stack(trajectory).astype(np.float64)
 
+print(trajectory_plot.shape)
 for idx in idxes:
     coords={
             "time": dt * inner_steps * np.arange(outer_steps),
@@ -111,10 +113,7 @@ for idx in idxes:
     def vorticity(ds):
         return (ds.v.differentiate("x") - ds.u.differentiate("y")).rename(f"vorticity of sample {idx}")
 
-    (
-        ds.pipe(vorticity)
-        .thin(time=20)
-        .plot.imshow(col="time", cmap=sns.cm.icefire, robust=True, col_wrap=5)
-    )
-
+    
+    ds.pipe(vorticity).thin(time=20).plot.imshow(col="time", cmap=sns.cm.icefire, robust=True, col_wrap=5)
     plt.show()
+    
