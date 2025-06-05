@@ -10,6 +10,7 @@ import torch_cfd.tensor_utils as tensor_utils
 
 
 from tqdm import tqdm
+import random
 
 def block_reduce(array, block_size, reduction_fn):
     new_shape = []
@@ -93,7 +94,7 @@ def main():
 
     
     v0_full = filtered_velocity_field(
-        full_grid, max_velocity, peak_wavenumber, iterations=3, random_state=42,
+        full_grid, max_velocity, peak_wavenumber, iterations=50, random_state=42,
         device=device, batch_size=batch_size,)
     pressure_bc = boundaries.get_pressure_bc_from_velocity(v0)
 
@@ -130,10 +131,10 @@ def main():
 
     pairs = []
 
-
+    rng = random.randint(0, 1e9)
     for i in range(sample_size):
         v0 = filtered_velocity_field(
-        full_grid, max_velocity, peak_wavenumber, iterations=3, random_state=i,
+        full_grid, max_velocity, peak_wavenumber, iterations=50, random_state=rng+i,
         device=device, batch_size=batch_size,)
 
         v = v0
@@ -154,7 +155,8 @@ def main():
 
 
 if __name__ == "__main__":
-      main()
+    with torch.inference_mode():
+        main()
 
 
 
