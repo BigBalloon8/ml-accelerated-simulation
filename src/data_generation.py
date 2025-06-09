@@ -7,10 +7,27 @@ from torch_cfd.fvm import RKStepper, NavierStokes2DFVMProjection
 from torch_cfd.forcings import KolmogorovForcing
 import torch_cfd.finite_differences as fdm
 import torch_cfd.tensor_utils as tensor_utils
+import torch.utils._pytree as pytree
 
+from safetensors.torch import save_file, load_file
 
 from tqdm import tqdm
 import random
+
+SAVEFILENAME = "/home/crae/projects/ml-accelerated-simulation/data/data.safetensors"
+
+# Uncomment For Colab
+
+# from google.colab import drive
+# drive.mount('/content/drive')
+
+# SAVEFILENAME = "/content/drive/My Drive/data.safetensors"
+
+# import os.path
+# if not os.path.isfile(SAVEFILENAME):
+#     with open(SAVEFILENAME, "w") as f:
+#         pass
+
 
 def block_reduce(array, block_size, reduction_fn):
     new_shape = []
@@ -26,8 +43,35 @@ def block_reduce(array, block_size, reduction_fn):
     return multiple_axis_reduction_fn(array.reshape(new_shape))
 
 
+def _normalize_axis(axis: int, ndim: int) -> int:
+    if not -ndim <= axis < ndim:
+        raise ValueError(f"invalid axis {axis} for ndim {ndim}")
+    if axis < 0:
+        axis += ndim
+    return axis
+
+def slice_along_axis(
+    inputs, axis: int, idx, expect_same_dims: bool = True):
+
+    arrays, tree_def = pytree.tree_flatten(inputs)
+    ndims = set(a.ndim for a in arrays)
+    if expect_same_dims and len(ndims) != 1:
+        raise ValueError(
+            "arrays in `inputs` expected to have same ndims, but have "
+            f"{ndims}. To allow this, pass expect_same_dims=False"
+        )
+    sliced = []
+    for array in arrays:
+        ndim = array.ndim
+        slc = tuple(
+            idx if j == _normalize_axis(axis, ndim) else slice(None)
+            for j in range(ndim)
+        )
+        sliced.append(array[slc])
+    return pytree.tree_unflatten(sliced, tree_def)
+
 def downsample_staggered_velocity_component(u, direction: int, factor: int):
-    w = tensor_utils.slice_along_axis(u, direction, slice(factor - 1, None, factor))
+    w = slice_along_axis(u, direction, slice(factor - 1, None, factor))
     block_size = tuple(1 if j == direction else factor for j in range(u.ndim))
     return block_reduce(w, block_size, torch.mean)
 
@@ -44,17 +88,14 @@ def downsample_staggered_velocity(
                      factor: int) -> grids.GridVariable:
             array = downsample_staggered_velocity_component(u.data, direction,
                                                             round(factor))
-            grid_array = grids.GridTensor(array, offset=u.offset, grid=destination_grid)
-            return grids.GridVariable(grid_array, bc=u.bc)
+            grid_array = grids.GridVariable(array.squeeze(), offset=u.offset, grid=destination_grid, bc=u.bc)
+            return grid_array
         result.append(downsample(u, j, round(factor)))
-        return tuple(result)
-
-
+    return grids.GridVariableVector(tuple(result))
 
 def main():
     sample_size = 1024
-
-    high_res = 2048
+    high_res = 1024
     low_res = 64
     batch_size = 16
     density = 1.0
@@ -64,9 +105,8 @@ def main():
     viscosity = 1e-3
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     torch.set_default_dtype(torch.float64)
-    burn_in_time = 10
+    burn_in_time = 1
     simulation_time = 30
-    sim_steps = 2048+512
     diam = 2 * torch.pi
 
     step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
@@ -96,12 +136,13 @@ def main():
     v0_full = filtered_velocity_field(
         full_grid, max_velocity, peak_wavenumber, iterations=50, random_state=42,
         device=device, batch_size=batch_size,)
-    pressure_bc = boundaries.get_pressure_bc_from_velocity(v0)
+    pressure_bc = boundaries.get_pressure_bc_from_velocity(v0_full)
 
-    v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0)
+    v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
+
 
     forcing_fn_full = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
-        grid=full_grid, offsets=(v0[0].offset, v0[1].offset))
+        grid=full_grid, offsets=(v0_full[0].offset, v0_full[1].offset))
     
     forcing_fn_coarse = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
         grid=coarse_grid, offsets=(v0_coarse[0].offset, v0_coarse[1].offset))
@@ -109,13 +150,13 @@ def main():
     ns2d_full = NavierStokes2DFVMProjection(
         viscosity=viscosity,
         grid=full_grid,
-        bcs=(v0[0].bc, v0[1].bc),
+        bcs=(v0_full[0].bc, v0_full[1].bc),
         density=density,
         drag=0.1,
         forcing=forcing_fn_full,
         solver=step_fn,
         # set_laplacian=False,
-    ).to(v0.device)
+    ).to(v0_full.device)
 
     ns2d_coarse = NavierStokes2DFVMProjection(
         viscosity=viscosity,
@@ -131,7 +172,7 @@ def main():
 
     pairs = []
 
-    rng = random.randint(0, 1e9)
+    rng = random.randint(0, int(1e9))
     for i in range(sample_size):
         v0 = filtered_velocity_field(
         full_grid, max_velocity, peak_wavenumber, iterations=50, random_state=rng+i,
@@ -139,17 +180,33 @@ def main():
 
         v = v0
         nan_count = 0
-
-        for _ in range(round(burn_in_time/dt)):
+        time_between_samples = 1
+        """
+        for _ in tqdm(range(round(burn_in_time/dt))):
             v, p = step_fn.forward(v, dt, equation=ns2d_full)
-
-        for _ in range((simulation_time/dt)//inner_step):
+        """
+        for _ in (range(round(((simulation_time/time_between_samples)/dt)//inner_step))):
             coarse_u_t = downsample_staggered_velocity(full_grid, coarse_grid, v)
-            for _ in range(inner_step):
+            print("done")
+            for _ in tqdm(range(inner_step)):
                 v, p = step_fn.forward(v, dt, equation=ns2d_full)
-            v_coarse = step_fn.forward(coarse_u_t, delta_t, equation=ns2d_coarse)
+            v_coarse, p = step_fn.forward(coarse_u_t, delta_t, equation=ns2d_coarse)
             pairs.append((v, v_coarse))
+            for _ in range(round(time_between_samples/dt)):
+                v, p = step_fn.forward(v, dt, equation=ns2d_full)
+
+
+        dataset = load_file(filename=SAVEFILENAME)
+        num_samples = len(dataset.keys())
+        for pi, pair in enumerate(pairs):
+            dataset[f"{num_samples+pi}_f"] = torch.stack(pair[0].data).cpu()
+            dataset[f"{num_samples+pi}_c"] = torch.stack(pair[1].data).cpu()
+        save_file(dataset, SAVEFILENAME)
+        pairs = []
             
+
+        
+
         
 
 
