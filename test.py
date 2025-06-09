@@ -13,9 +13,10 @@ import seaborn as sns
 import xarray
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 n = 256
-batch_size = 16
+batch_size = 4
 density = 1.0
 max_velocity = 3.0
 peak_wavenumber = 4.0
@@ -24,12 +25,13 @@ viscosity = 1e-3
 print(f"Cuda Available: {torch.cuda.is_available()}")
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 torch.set_default_dtype(torch.float64)
-inner_steps = 2
+inner_steps = 20
 outer_steps = 100
 diam = 2 * torch.pi
 
 
-
+with open("test.txt", "w") as f:
+    pass
 
 grid = grids.Grid((n, n), domain=((0, diam), (0, diam)), device=device)
 
@@ -68,6 +70,7 @@ ns2d = NavierStokes2DFVMProjection(
 v = v0
 trajectory = [[v0[0].data.detach().cpu().numpy()], [v0[1].data.detach().cpu().numpy()]]
 nan_count = 0
+print(v0.shape)
 
 
 print(v.shape)
@@ -84,12 +87,14 @@ with tqdm(total=outer_steps*inner_steps) as pbar:
                 break
             trajectory[0].append(v[0].data.detach().cpu().numpy())
             trajectory[1].append(v[1].data.detach().cpu().numpy())
+            #print(torch.stack(v.data).shape)
+            #input()
             pbar.update(inner_steps)
 
 
 # GRAPHING
 
-idxes = np.random.choice(np.arange(batch_size), size=3, replace=False)
+idxes = np.random.choice(np.arange(batch_size), size=1, replace=False)
 
 print(trajectory[0][0].shape)
 trajectory_plot = np.stack(trajectory).astype(np.float64)
@@ -116,4 +121,22 @@ for idx in idxes:
     
     ds.pipe(vorticity).thin(time=20).plot.imshow(col="time", cmap=sns.cm.icefire, robust=True, col_wrap=5)
     plt.show()
+
+    # Animation
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    vort = ds.pipe(vorticity)
+    image = vort.isel(time=0).plot.imshow(ax=ax, cmap=sns.cm.icefire, robust=True)
+    freq = 2
+    def update(frame):
+        image.set_array(vort.isel(time=frame*freq).values)
+        ax.set_title(f"Vorticity at time {ds.time[frame*freq].values:.2f} s")
+        #vort.isel(time=frame).plot.imshow(ax=ax, cmap=sns.cm.icefire, robust=True, add_colorbar= False)
+    ani = animation.FuncAnimation(fig, update, frames=len(ds.time)//freq, repeat=False, blit=False, interval=5)
+    writervideo = animation.FFMpegWriter(fps=60)
+    ani.save('sim.mp4', writer=writervideo)
+    plt.show()
+
+    
     
