@@ -13,6 +13,7 @@ from safetensors.torch import save_file, load_file
 
 from tqdm import tqdm
 import random
+from functools import partial
 
 SAVEFILENAME = "/home/crae/projects/ml-accelerated-simulation/data/data.safetensors"
 
@@ -86,8 +87,7 @@ def downsample_staggered_velocity(
     for j, u in enumerate(velocity):
         def downsample(u: grids.GridVariable, direction: int,
                      factor: int) -> grids.GridVariable:
-            array = downsample_staggered_velocity_component(u.data, direction,
-                                                            round(factor))
+            array = torch.vmap(partial(downsample_staggered_velocity_component, direction=direction, factor=round(factor)))(u.data)
             grid_array = grids.GridVariable(array.squeeze(), offset=u.offset, grid=destination_grid, bc=u.bc)
             return grid_array
         result.append(downsample(u, j, round(factor)))
@@ -95,9 +95,9 @@ def downsample_staggered_velocity(
 
 def main():
     sample_size = 1024
-    high_res = 1024
+    high_res = 256
     low_res = 64
-    batch_size = 16
+    batch_size = 32
     density = 1.0
     max_velocity = 7.0
     peak_wavenumber = 4.0
@@ -181,28 +181,29 @@ def main():
         v = v0
         nan_count = 0
         time_between_samples = 1
-        """
-        for _ in tqdm(range(round(burn_in_time/dt))):
-            v, p = step_fn.forward(v, dt, equation=ns2d_full)
-        """
-        for _ in (range(round(((simulation_time/time_between_samples)/dt)//inner_step))):
+
+
+        print("Starting Sim")
+        for _ in range(round(((simulation_time/time_between_samples)/dt)//inner_step)):
+            for _ in tqdm(range(round(time_between_samples/dt))):
+                v, p = step_fn.forward(v, dt, equation=ns2d_full)
+
+            print("Generating Sample")
             coarse_u_t = downsample_staggered_velocity(full_grid, coarse_grid, v)
-            print("done")
             for _ in tqdm(range(inner_step)):
                 v, p = step_fn.forward(v, dt, equation=ns2d_full)
             v_coarse, p = step_fn.forward(coarse_u_t, delta_t, equation=ns2d_coarse)
-            pairs.append((v, v_coarse))
-            for _ in range(round(time_between_samples/dt)):
-                v, p = step_fn.forward(v, dt, equation=ns2d_full)
+            pairs.append((v.clone(), v_coarse.clone()))
 
 
-        dataset = load_file(filename=SAVEFILENAME)
-        num_samples = len(dataset.keys())
-        for pi, pair in enumerate(pairs):
-            dataset[f"{num_samples+pi}_f"] = torch.stack(pair[0].data).cpu()
-            dataset[f"{num_samples+pi}_c"] = torch.stack(pair[1].data).cpu()
-        save_file(dataset, SAVEFILENAME)
-        pairs = []
+            dataset = load_file(filename=SAVEFILENAME)
+            num_samples = len(dataset.keys())//2
+            for pi, pair in enumerate(pairs):
+                for b in range(batch_size):
+                    dataset[f"{num_samples+pi*batch_size+b}_f"] = torch.stack(pair[0].data)[:,b].cpu()
+                    dataset[f"{num_samples+pi*batch_size+b}_c"] = torch.stack(pair[1].data)[:,b].cpu()
+            save_file(dataset, SAVEFILENAME)
+            pairs = []
             
 
         
