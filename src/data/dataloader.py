@@ -65,12 +65,14 @@ class KolmogrovFlowData(Dataset):
     
     def __getitem__(self, idx):
         full = self.loader.get_tensor(f"{idx}_f")
+        coarse = self.loader.get_tensor(f"{idx}_c")
+        factor = round(full.shape[1]//coarse.shape[1])
         result = []
         for j, u in enumerate(full):
-            result.append(downsample_staggered_velocity_component(u, j))
+            result.append(downsample_staggered_velocity_component(u, j, factor=factor))
         c_full = torch.stack(result)
 
-        coarse = self.loader.get_tensor(f"{idx}_c")
+        
         dif = c_full - coarse
         # TODO normalize coarse input 
         return coarse, dif

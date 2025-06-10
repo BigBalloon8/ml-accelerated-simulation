@@ -95,7 +95,7 @@ def downsample_staggered_velocity(
 
 def main():
     sample_size = 1024
-    high_res = 1024
+    high_res = 256
     low_res = 64
     batch_size = 32
     density = 1.0
