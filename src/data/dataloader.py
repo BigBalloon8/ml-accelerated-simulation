@@ -1,4 +1,4 @@
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 import torch
 import torch.utils._pytree as pytree
 
@@ -58,7 +58,6 @@ class KolmogrovFlowData(Dataset):
         super().__init__()
         # Keep the file open for lazy tensor loading
         self.loader = safetensors.safe_open(filename, framework="pt").__enter__()
-    
 
     def __len__(self):
         return len(self.loader.keys()//2)
@@ -79,14 +78,15 @@ class KolmogrovFlowData(Dataset):
 
 
     def __del__(self):
-        #make sure to close the file to stop file corruption
+        # make sure to close the file to stop file corruption
         self.loader.__exit__(None, None, None)
 
 
 def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=4, prefetch_factor=2):
     dataset = KolmogrovFlowData(filename=filename)
-    return DataLoader(
-        dataset,
+    train_ds, val_ds = random_split(dataset, [0.8,0.2])
+    train_loader = DataLoader(
+        train_ds,
         batch_size=batchsize,
         shuffle=True,
         num_workers=num_workers,
@@ -95,4 +95,12 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=4, prefe
         prefetch_factor=prefetch_factor,
         persistent_workers=True
         )
+    validation_loader = DataLoader(
+        val_ds,
+        batch_size=1,
+        shuffle=False,
+        num_workers=0,
+        pin_memory=True
+    )
+    return train_loader, validation_loader
 
