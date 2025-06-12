@@ -3,3 +3,5 @@ __pycache__
 .venv/
 .DS_store
 ./test_data.py
+__pycache__
+client_secrets.json

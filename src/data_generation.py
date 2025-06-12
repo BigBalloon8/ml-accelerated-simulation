@@ -15,7 +15,7 @@ from tqdm import tqdm
 import random
 from functools import partial
 
-SAVEFILENAME = "/home/crae/projects/ml-accelerated-simulation/data/data.safetensors"
+SAVEFILENAME = "data.safetensors"
 
 # Uncomment For Colab
 
@@ -29,6 +29,16 @@ SAVEFILENAME = "/home/crae/projects/ml-accelerated-simulation/data/data.safetens
 #     with open(SAVEFILENAME, "w") as f:
 #         pass
 
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
+
+gauth = GoogleAuth()
+gauth.CommandLineAuth()
+drive = GoogleDrive(gauth)
+
+import os.path
+if not os.path.isfile(SAVEFILENAME):
+    save_file({}, SAVEFILENAME)
 
 def block_reduce(array, block_size, reduction_fn):
     new_shape = []
@@ -95,9 +105,9 @@ def downsample_staggered_velocity(
 
 def main():
     sample_size = 1024
-    high_res = 256
+    high_res = 1024
     low_res = 64
-    batch_size = 32
+    batch_size = 64
     density = 1.0
     max_velocity = 7.0
     peak_wavenumber = 4.0
@@ -129,12 +139,12 @@ def main():
         viscosity=viscosity,
     )
 
+
     inner_step = round(delta_t/dt)
 
 
-    
     v0_full = filtered_velocity_field(
-        full_grid, max_velocity, peak_wavenumber, iterations=50, random_state=42,
+        full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
         device=device, batch_size=batch_size,)
     pressure_bc = boundaries.get_pressure_bc_from_velocity(v0_full)
 
@@ -143,7 +153,7 @@ def main():
 
     forcing_fn_full = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
         grid=full_grid, offsets=(v0_full[0].offset, v0_full[1].offset))
-    
+
     forcing_fn_coarse = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
         grid=coarse_grid, offsets=(v0_coarse[0].offset, v0_coarse[1].offset))
 
@@ -184,7 +194,7 @@ def main():
 
 
         print("Starting Sim")
-        for _ in range(round(((simulation_time/time_between_samples)/dt)//inner_step)):
+        for j in range(round(((simulation_time/time_between_samples)/dt)//inner_step)):
             for _ in tqdm(range(round(time_between_samples/dt))):
                 v, p = step_fn.forward(v, dt, equation=ns2d_full)
 
@@ -195,26 +205,23 @@ def main():
             v_coarse, p = step_fn.forward(coarse_u_t, delta_t, equation=ns2d_coarse)
             pairs.append((v.clone(), v_coarse.clone()))
 
-
-            dataset = load_file(filename=SAVEFILENAME)
+            dataset = {}
             num_samples = len(dataset.keys())//2
             for pi, pair in enumerate(pairs):
                 for b in range(batch_size):
                     dataset[f"{num_samples+pi*batch_size+b}_f"] = torch.stack(pair[0].data)[:,b].cpu()
                     dataset[f"{num_samples+pi*batch_size+b}_c"] = torch.stack(pair[1].data)[:,b].cpu()
             save_file(dataset, SAVEFILENAME)
+
+            file2 = drive.CreateFile({'title': f'data{rng+i}_{j}.safetensors'})
+            file2.SetContentFile(SAVEFILENAME)
+            file2.Upload()
+
             pairs = []
-            
 
-        
-
-        
 
 
 
 if __name__ == "__main__":
     with torch.inference_mode():
         main()
-
-
-
