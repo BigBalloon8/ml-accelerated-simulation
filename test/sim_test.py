@@ -15,8 +15,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-n = 256
-batch_size = 4
+n = 128
+batch_size = 1
 density = 1.0
 max_velocity = 3.0
 peak_wavenumber = 4.0

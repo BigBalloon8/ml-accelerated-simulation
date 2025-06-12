@@ -60,7 +60,7 @@ class KolmogrovFlowData(Dataset):
         self.loader = safetensors.safe_open(filename, framework="pt").__enter__()
 
     def __len__(self):
-        return len(self.loader.keys()//2)
+        return len(self.loader.keys())//2
     
     def __getitem__(self, idx):
         full = self.loader.get_tensor(f"{idx}_f")
@@ -71,7 +71,6 @@ class KolmogrovFlowData(Dataset):
             result.append(downsample_staggered_velocity_component(u, j, factor=factor))
         c_full = torch.stack(result)
 
-        
         dif = c_full - coarse
         # TODO normalize coarse input 
         return coarse, dif
@@ -97,7 +96,7 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=4, prefe
         )
     validation_loader = DataLoader(
         val_ds,
-        batch_size=1,
+        batch_size=batchsize,
         shuffle=False,
         num_workers=0,
         pin_memory=True
