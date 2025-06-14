@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-
+from tools.tools import paramToList
 
 class MLP(nn.Module):
     """
@@ -10,22 +10,15 @@ class MLP(nn.Module):
         dropouts (float or list): Dropout probability for each layer except the last. 
                                   If a float, applies the same dropout to all layers.
                                   If a list, must match the number of layers minus one.
+    Return:
+        Hyperparameter in a list
     """
     def __init__(self, config):
         super(MLP, self).__init__()
-        structure = [config["input_size"]] + config["hidden_size"] + [config["output_size"]]
-        dropouts = config["dropouts"]
-
+        structure = paramToList(config["structures"], "structures")
+        self.dropouts = paramToList(config["dropouts"], "dropouts", len(structure)-1)
         self.linears = nn.ModuleList([nn.Linear(structure[i], structure[i+1]) for i in range(len(structure)-1)])
 
-        # check and set dropout probabilities
-        if isinstance(dropouts, (float, int)):
-            self.dropouts = [dropouts] * (len(self.linears)-1)
-        elif isinstance(dropouts, list) and len(dropouts) != len(self.linears)-1:
-            raise ValueError("Dropout list length must match the number of layers minus one.")
-        elif not isinstance(dropouts, list):
-            raise TypeError("Dropouts probability must be a float or a list of floats.")
-        
     def forward(self, x):
         for i, layer in enumerate(self.linears):
             if i < len(self.linears)-1:
@@ -41,7 +34,7 @@ class MLP(nn.Module):
         summary = "MLP Architecture:\n"
         for i, layer in enumerate(self.linears):
             summary += f"Layer {i}: {layer}\n"
-        return summary ## complete 
+        return summary  
 
 if __name__ == "__main__":
     import json
