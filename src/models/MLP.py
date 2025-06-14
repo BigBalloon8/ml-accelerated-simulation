@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from tools.tools import paramToList
+from tools import paramToList
 
 class MLP(nn.Module):
     """
@@ -26,19 +26,12 @@ class MLP(nn.Module):
             else:
                 break
         return layer(x)
-    
-    def __str__(self):
-        """
-        Returns a summary of the model's architecture.
-        """
-        summary = "MLP Architecture:\n"
-        for i, layer in enumerate(self.linears):
-            summary += f"Layer {i}: {layer}\n"
-        return summary  
+
 
 if __name__ == "__main__":
     import json
     with open("src/models/configs/mlp1.json", "r") as f:
         config = json.load(f)
         mlp = MLP(config)
-        print(mlp)
+        w = nn.ModuleList([nn.Flatten()])
+        print(mlp.get_parameter)

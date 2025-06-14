@@ -19,4 +19,16 @@ def paramToList(param, desc, dimension=0):
             raise TypeError(f"{desc} must be a float or a list of floats.")
         else:
             raise ValueError("dimension has to be greater than 0")
-        
+
+
+def getModel(name, config):
+    if name.upper() == "MLP":
+        from MLP import MLP
+        return MLP(config)
+    elif name.upper() == "CNN":
+        from CNN import CNN
+        return CNN(config)
+    elif name.upper() == "ConvNet":
+        from ConvNet import ConvNet
+        return ConvNet(config)
+       
