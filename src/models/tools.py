@@ -28,7 +28,7 @@ def getModel(name, config):
     elif name.upper() == "CNN":
         from CNN import CNN
         return CNN(config)
-    elif name.upper() == "ConvNet":
+    elif name.upper() == "CONVNET":
         from ConvNet import ConvNet
         return ConvNet(config)
        
