@@ -2,9 +2,9 @@ def paramToList(param, desc, dimension=0):
         '''
         Check and convert hyperparameters into lists
         Args:
-            param: hyperparameter
-            desc: description of hyperparameter
-            dimension: target list dimension (not applicable if type(param) == dict)
+            param (dict, float, int or list): hyperparameter
+            desc (str): description of hyperparameter
+            dimension (int): target list dimension (not applicable if type(param) == dict)
         '''
         if isinstance(param, dict) and dimension == 0:
             hold = list(param.values())
@@ -21,7 +21,14 @@ def paramToList(param, desc, dimension=0):
             raise ValueError("dimension has to be greater than 0")
 
 
-def getModel(name, config):
+def getModel(name, config): ## ask abt relative imports not working (prefered to put tools.py in a folder in models)
+    '''
+    Fetch and instantiate a deep learning model 
+    Args:
+        name (str): name of model
+        config (dict): hyperparameters to put in the model
+    Return: model
+    '''
     if name.upper() == "MLP":
         from MLP import MLP
         return MLP(config)
