@@ -3,8 +3,23 @@ import torch.nn.functional as F
 from tools import paramToList
 
 
-class CNN(nn.Module): # Just CNN layers
-    def __init__(self, config): #in_channels, hidden, out_channels, kernel_sizes, strides, paddings, dropouts=0
+class CNN(nn.Module):
+    """
+    Convolution layers with customisable hyperparameters.
+    Args:
+        config (dict): A dictionary containing hyperparameters
+            structure (dict): Structure of Model
+                in_channels (int): Size of input channels
+                hidden_channels (list): Size of hidden channels
+                out_channels (int): Size of output channels
+            kernel_sizes (int or list): Dimension of kernel
+            strides (int or list): Step size that the kernel will take
+            paddings (int or list): Width of padding
+            dropouts (int, float or list): Dropout probability for each layer (except the last) 
+                If a float or int, applies the same dropout to all layers.
+                If a list, must match the number of layers minus one.
+    """
+    def __init__(self, config): 
         super().__init__()
         structure = paramToList(config["structures"], "structures")
         kernel_sizes, strides, paddings = paramToList(config["kernel_sizes"], "kernel_sizes", len(structure)-1), paramToList(config["strides"], "strides", len(structure)-1), paramToList(config["paddings"], "paddings", len(structure)-1)
