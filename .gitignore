@@ -1,1 +1,3 @@
 ./test.py
+.venv/
+./test_data.py
