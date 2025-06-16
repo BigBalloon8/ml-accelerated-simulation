@@ -7,5 +7,7 @@
     "kernel_sizes": 3,
     "strides": 1,
     "paddings": 2,
-    "dropouts": 0.5
+    "group": 1,
+    "dropouts": 0.5,
+    "activation_func": "relu"
 }

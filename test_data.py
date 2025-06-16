@@ -23,11 +23,12 @@ class MLP(nn.Module):
         structure = paramToList(config["structures"], "structures")
         self.dropouts = paramToList(config["dropouts"], "dropouts", len(structure)-1)
         self.linears = nn.ModuleList([nn.Linear(structure[i], structure[i+1]) for i in range(len(structure)-1)])
+        self.act = F.selu_
 
     def forward(self, x):
         for i, layer in enumerate(self.linears):
             if i < len(self.linears)-1:
-                x = F.dropout(F.selu_(layer(x)), p=self.dropouts[i], training=True)
+                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
             else:
                 break
         return layer(x)
