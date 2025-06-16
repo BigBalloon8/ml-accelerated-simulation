@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from tools import paramToList
+from tools import paramToList, structureLoader, getAct
 
 class MLP(nn.Module):
     """
@@ -17,17 +17,17 @@ class MLP(nn.Module):
     """
     def __init__(self, config):
         super(MLP, self).__init__()
-        structure = paramToList(config["structures"], "structures")
-        self.dropouts = paramToList(config["dropouts"], "dropouts", len(structure)-1)
-        self.linears = nn.ModuleList([nn.Linear(structure[i], structure[i+1]) for i in range(len(structure)-1)])
+        self.act = getAct(config["activation_func"])
+        structure = structureLoader(config["structures"])
+        self.dropouts = paramToList(config["dropouts"], len(structure)-1)
+        self.layers = nn.ModuleList([nn.Linear(structure[i], structure[i+1]) for i in range(len(structure)-1)])
 
     def forward(self, x):
-        for i, layer in enumerate(self.linears):
-            if i < len(self.linears)-1:
-                x = F.dropout(F.selu_(layer(x)), p=self.dropouts[i], training=True)
+        for i, layer in enumerate(self.layers):
+            if i < len(self.layers)-1:
+                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
             else:
-                break
-        return layer(x)
+                return layer(x)
 
 
 if __name__ == "__main__":
@@ -35,5 +35,4 @@ if __name__ == "__main__":
     with open("src/models/configs/mlp1.json", "r") as f:
         config = json.load(f)
         mlp = MLP(config)
-        w = nn.ModuleList([nn.Flatten()])
         print(mlp.get_parameter)

@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from tools import paramToList
+from tools import paramToList, structureLoader, getAct
 
 
 class CNN(nn.Module):
@@ -12,27 +12,28 @@ class CNN(nn.Module):
                 in_channels (int): Size of input channels
                 hidden_channels (list): Size of hidden channels
                 out_channels (int): Size of output channels
-            kernel_sizes (int or list): Dimension of kernel
-            strides (int or list): Step size that the kernel will take
-            paddings (int or list): Width of padding
-            dropouts (int, float or list): Dropout probability for each layer (except the last) 
-                If a float or int, applies the same dropout to all layers.
-                If a list, must match the number of layers minus one.
+            kernel_sizes* (int or list): Dimension of kernel
+            strides* (int or list): Step size that the kernel will take
+            paddings* (int or list): Width of padding
+            group* (int or list): number of groups (much be divide both in_channels and out_channels)
+            dropouts* (int, float or list): Dropout probability for each layer (except the last) 
+                (*) If a float or int, applies the same value to all layers.
+                    If a list, must match the number of layers minus one.
     """
-    def __init__(self, config): 
+    def __init__(self, config): # add groups as hyper parameter, customise activation functions
         super().__init__()
-        structure = paramToList(config["structures"], "structures")
-        kernel_sizes, strides, paddings = paramToList(config["kernel_sizes"], "kernel_sizes", len(structure)-1), paramToList(config["strides"], "strides", len(structure)-1), paramToList(config["paddings"], "paddings", len(structure)-1)
-        self.dropouts = paramToList(config["dropouts"], "dropouts", len(structure)-1)
-        self.convs = nn.ModuleList([nn.Conv2d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i]) for i in range(len(structure)-1)])        
+        self.act = getAct(config["activation_func"])        
+        structure = structureLoader(config["structures"])
+        kernel_sizes, strides, paddings, group = paramToList(config["kernel_sizes"], len(structure)-1), paramToList(config["strides"], len(structure)-1), paramToList(config["paddings"], len(structure)-1), paramToList(config["group"], len(structure)-1)
+        self.dropouts = paramToList(config["dropouts"], len(structure)-1)
+        self.layers = nn.ModuleList([nn.Conv2d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
             
     def forward(self, x):
-        for i, layer in enumerate(self.convs):
-            if i < len(self.convs) - 1:
-                x = F.dropout(F.relu_(layer(x)), p=self.dropouts[i], training=True)
+        for i, layer in enumerate(self.layers):
+            if i < len(self.layers) - 1:
+                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
             else:
-                break
-        return layer(x)
+                return layer(x)
 
 
 if __name__ == "__main__":

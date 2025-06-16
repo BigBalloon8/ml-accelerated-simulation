@@ -9,7 +9,6 @@ class ConvNet(nn.Module):
         config (dict): A dictionary containing hyperparameters
             CNN (dict): Hyperparameters for the convolutional layers
             MLP (dict): Hyperparameters for the fully-connected layers
-
     """
     def __init__(self, config):
         super().__init__()
@@ -20,12 +19,12 @@ class ConvNet(nn.Module):
             if i < len(self.layers) - 1:
                 x = nn.Flatten(layer(x))
             else:
-                break
-        return layer(x)
-    
+                return layer(x)
+
+
 if __name__ == "__main__":
     import json
     with open("src/models/configs/convNet1.json", "r") as f:
         config = json.load(f)
         convnet = ConvNet(config)
-        print(convnet.get_parameter)
+        print(convnet)
