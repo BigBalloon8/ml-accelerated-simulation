@@ -6,14 +6,15 @@ class MLP(nn.Module):
     """
     Multi-Layer Perceptron (MLP) with customizable dropout rates.
     Args:
-        config (dict): A dictionary containing hyperparameters
-            structure (dict): Structure of Model
-                input_size (int): Size of input
-                hidden_size (list): Size of hidden layers
-                output_size (int): Size of output
-            dropouts (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout) 
-                If a float or int, applies the same dropout to all layers.
-                If a list, must match the number of layers minus one.
+        config (dict): A dictionary containing hyperparameters:\n
+            structure (dict): Structure of Model: (\n
+                input_size (int): Size of input,\n
+                hidden_size (list): Size of hidden layers,\n
+                output_size (int): Size of output)\n
+            dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n 
+            activation_func (str): Name of desired activation function\n 
+    (*):\n If a float or int, applies the same value to all layers.\n
+    \t If a list, must match the number of layers minus one.
     """
     def __init__(self, config):
         super().__init__()
@@ -28,6 +29,7 @@ class MLP(nn.Module):
             if i < len(self.layers)-1:
                 x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
         return layer(x)
+
 
 
 if __name__ == "__main__":
