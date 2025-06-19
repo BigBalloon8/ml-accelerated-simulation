@@ -74,4 +74,20 @@ def getModel(name, config):
     elif name.upper() == "CONVNET":
         from ConvNet import ConvNet
         return ConvNet(config)
+    elif name.upper() == "RESNETBLOCK":
+        from ResNet import ResNetBlock
+        return ResNetBlock(config)
+    elif name.upper() == "RESNEXTBLOCK":
+        from ResNet import ResNeXtBlock
+        return ResNeXtBlock(config)
+    
+
+def getLayers(model):
+    '''
+    Fetch the layers from a deep learning model
+    Args:
+        model (class): the model to fetch from
+    Return: a dictionary of the layers in the model
+    '''
+    return dict(model.named_modules())
 

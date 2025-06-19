@@ -11,23 +11,23 @@ class MLP(nn.Module):
                 input_size (int): Size of input
                 hidden_size (list): Size of hidden layers
                 output_size (int): Size of output
-            dropouts (int, float or list): Dropout probability for each layer (except the last) 
+            dropouts (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout) 
                 If a float or int, applies the same dropout to all layers.
                 If a list, must match the number of layers minus one.
     """
     def __init__(self, config):
-        super(MLP, self).__init__()
+        super().__init__()
         self.act = getAct(config["activation_func"])
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
+        
         self.layers = nn.ModuleList([nn.Linear(structure[i], structure[i+1]) for i in range(len(structure)-1)])
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):
             if i < len(self.layers)-1:
                 x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
-            else:
-                return layer(x)
+        return layer(x)
 
 
 if __name__ == "__main__":

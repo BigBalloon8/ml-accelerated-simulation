@@ -15,12 +15,12 @@ class CNN(nn.Module):
             kernel_sizes* (int or list): Dimension of kernel
             strides* (int or list): Step size that the kernel will take
             paddings* (int or list): Width of padding
-            group* (int or list): number of groups (much be divide both in_channels and out_channels)
-            dropouts* (int, float or list): Dropout probability for each layer (except the last) 
+            group* (int or list): number of groups (must divide both in_channels and out_channels) (Set to 1 for default)
+            dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)
                 (*) If a float or int, applies the same value to all layers.
                     If a list, must match the number of layers minus one.
     """
-    def __init__(self, config): # add groups as hyper parameter, customise activation functions
+    def __init__(self, config):
         super().__init__()
         self.act = getAct(config["activation_func"])        
         structure = structureLoader(config["structures"])
@@ -32,8 +32,7 @@ class CNN(nn.Module):
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
                 x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
-            else:
-                return layer(x)
+        return layer(x)
 
 
 if __name__ == "__main__":
