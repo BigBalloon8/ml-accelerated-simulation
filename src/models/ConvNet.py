@@ -6,8 +6,8 @@ class ConvNet(nn.Module):
     """
     Standard convolutional neural network (CNN) with customizable hyperparameters.
     Args:
-        config (dict): A dictionary containing hyperparameters
-            CNN (dict): Hyperparameters for the convolutional layers
+        config (dict): A dictionary containing hyperparameters:\n
+            CNN (dict): Hyperparameters for the convolutional layers\n
             MLP (dict): Hyperparameters for the fully-connected layers
     """
     def __init__(self, config):

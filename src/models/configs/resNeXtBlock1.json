@@ -10,5 +10,5 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "1x1_Conv": false
+    "1x1_conv": false
 }

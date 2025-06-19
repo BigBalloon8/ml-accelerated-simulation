@@ -7,18 +7,19 @@ class CNN(nn.Module):
     """
     Convolution layers with customisable hyperparameters.
     Args:
-        config (dict): A dictionary containing hyperparameters
-            structure (dict): Structure of Model
-                in_channels (int): Size of input channels
-                hidden_channels (list): Size of hidden channels
-                out_channels (int): Size of output channels
-            kernel_sizes* (int or list): Dimension of kernel
-            strides* (int or list): Step size that the kernel will take
-            paddings* (int or list): Width of padding
-            group* (int or list): number of groups (must divide both in_channels and out_channels) (Set to 1 for default)
-            dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)
-                (*) If a float or int, applies the same value to all layers.
-                    If a list, must match the number of layers minus one.
+        config (dict): A dictionary containing hyperparameters:\n
+            structure (dict): Structure of Model: (\n
+                in_channels (int): Size of input channels,\n
+                hidden_channels (list): Size of hidden channels,\n
+                out_channels (int): Size of output channels)\n
+            kernel_sizes* (int or list): Dimension of kernel\n
+            strides* (int or list): Step size that the kernel will take\n
+            paddings* (int or list): Width of padding\n
+            group* (int or list): number of groups (must divide both in_channels and out_channels) (Set to 1 for default)\n
+            dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n
+            activation_func (str): Name of desired activation function\n 
+    (*):\n If a float or int, applies the same value to all layers.\n
+    \t If a list, must match the number of layers minus one.
     """
     def __init__(self, config):
         super().__init__()
@@ -33,6 +34,7 @@ class CNN(nn.Module):
             if i < len(self.layers) - 1:
                 x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
         return layer(x)
+
 
 
 if __name__ == "__main__":
