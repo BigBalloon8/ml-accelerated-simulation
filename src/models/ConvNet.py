@@ -4,7 +4,7 @@ from tools import getModel
 
 class ConvNet(nn.Module):
     """
-    Standard convolutional neural network with customizable hyperparameters.
+    Standard convolutional neural network (CNN) with customizable hyperparameters.
     Args:
         config (dict): A dictionary containing hyperparameters
             CNN (dict): Hyperparameters for the convolutional layers
@@ -13,13 +13,13 @@ class ConvNet(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.layers = nn.ModuleList([getModel(y, z) for y, z in config.items()])
+        self.flat = nn.Flatten()
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                x = nn.Flatten(layer(x))
-            else:
-                return layer(x)
+                x = self.flat(layer(x))
+        return layer(x)
 
 
 if __name__ == "__main__":

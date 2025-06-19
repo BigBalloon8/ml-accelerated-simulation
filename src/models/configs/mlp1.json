@@ -4,6 +4,6 @@
         "hidden_size": [4, 10, 10, 3],
         "output_size": 8192
     },
-    "dropouts": 0.5,
+    "dropouts": 0,
     "activation_func": "selu"
 }
