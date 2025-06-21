@@ -52,7 +52,7 @@ class ResNeXtBlock(nn.Module):
     """
     Residual neural network with Aggregated Transformation (ResNet) block with customizable hyperparameters.
     Args:
-        config^ (dict): A dictionary containing hyperparameters:\n 
+        config (dict): A dictionary containing hyperparameters:\n 
             structure (dict): Structure of Model: (\n
                 in_channels (int): Size of input channels,\n
                 hidden_channels (list): Size of hidden channels,\n
@@ -64,8 +64,6 @@ class ResNeXtBlock(nn.Module):
             dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n
             activation_func (str): Name of desired activation function\n 
             1x1_conv: (bool): Whether to apply 1x1 convolution to input before combining with output\n
-    (^):\n Use resNetBasicBlock.json for basic block.\n
-    \t Use resNetBottleneckBlock.json for Bottleneck Block.\n
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
     """
@@ -92,9 +90,12 @@ class ResNeXtBlock(nn.Module):
 
 
 
+
+
 if __name__ == "__main__":
     import json
     with open("src/models/configs/resNetBasicBlock1.json", "r") as f:
         config = json.load(f)
         resnet = ResNeXtBlock(config)
         print(resnet)
+

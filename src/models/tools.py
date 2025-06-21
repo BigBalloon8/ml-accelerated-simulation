@@ -80,6 +80,9 @@ def getModel(name, config):
     elif name.upper() == "RESNEXTBLOCK":
         from ResNet import ResNeXtBlock
         return ResNeXtBlock(config)
+    elif name.upper() == "DENSEBLOCK":
+        from DenseNet import DenseBlock
+        return DenseBlock(config)
     
 
 def getLayers(model):
