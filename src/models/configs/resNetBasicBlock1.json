@@ -1,4 +1,6 @@
+[
 {
+    "name": "ResNetBasicBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [2],
@@ -12,3 +14,4 @@
     "activation_func": "relu",
     "1x1_conv": true
 }
+]

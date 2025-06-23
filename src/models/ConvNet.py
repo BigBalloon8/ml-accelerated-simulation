@@ -1,5 +1,5 @@
 import torch.nn as nn
-from tools import getModel
+from models.tools import getModel
 
 class ConvNet(nn.Module):
     """

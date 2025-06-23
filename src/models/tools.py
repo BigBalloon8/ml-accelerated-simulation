@@ -63,7 +63,7 @@ def getPool(config):
         return AvgPool2d(config["kernel_sizes"], config["strides"])
 
 
-def getModel(name, config): 
+def getModel(config): 
     '''
     Fetch and instantiate a deep learning model 
     Args:
@@ -71,24 +71,31 @@ def getModel(name, config):
         config (dict): hyperparameters to put in the model
     Return: model
     '''
-    if name.upper() == "MLP":
-        from MLP import MLP
-        return MLP(config)
-    elif name.upper() == "CNN":
-        from CNN import CNN
-        return CNN(config)
-    elif name.upper() == "CONVNET":
-        from ConvNet import ConvNet
-        return ConvNet(config)
-    elif name.upper() == "RESNETBLOCK":
-        from ResNet import ResNetBlock
-        return ResNetBlock(config)
-    elif name.upper() == "RESNEXTBLOCK":
-        from ResNet import ResNeXtBlock
-        return ResNeXtBlock(config)
-    elif name.upper() == "DENSEBLOCK":
-        from DenseNet import DenseBlock
-        return DenseBlock(config)
+    for submodule in config:
+        if submodule["name"].upper() == "MLP":
+            from MLP import MLP
+            return MLP(config)
+        elif submodule["name"].upper() == "CNN":
+            from CNN import CNN
+            return CNN(config)
+        elif submodule["name"].upper() == "CONVNET":
+            from ConvNet import ConvNet
+            return ConvNet(config)
+        elif submodule["name"].upper() == "RESNETBLOCK":
+            from ResNet import ResNetBlock
+            return ResNetBlock(config)
+        elif submodule["name"].upper() == "RESNEXTBLOCK":
+            from ResNet import ResNeXtBlock
+            return ResNeXtBlock(config)
+        elif submodule["name"].upper() == "DENSEBLOCK":
+            from DenseNet import DenseBlock
+            return DenseBlock(config)
+        elif submodule["name"].upper() == "UNETENCODERBLOCK":
+            from UNET import UNetEncoderBlock
+            return UNetEncoderBlock(config)
+        elif submodule["name"].upper() == "UNETDECODERBLOCK":
+            from UNET import UNetDecoderBlock
+            return UNetDecoderBlock(config)
     
 
 def getLayers(model):

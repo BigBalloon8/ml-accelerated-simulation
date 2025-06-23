@@ -1,4 +1,6 @@
+[
 {
+    "name": "ResNetBottleneckBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [8, 8],
@@ -12,3 +14,4 @@
     "activation_func": "relu",
     "1x1_conv": true
 }
+]

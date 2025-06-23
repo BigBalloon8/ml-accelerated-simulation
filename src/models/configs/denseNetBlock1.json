@@ -1,4 +1,6 @@
+[
 {
+    "name": "DensNetBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [2, 2],
@@ -11,3 +13,4 @@
     "dropouts": 0,
     "activation_func": "relu"
 }
+]
