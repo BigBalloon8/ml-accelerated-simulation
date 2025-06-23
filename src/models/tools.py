@@ -63,7 +63,7 @@ def getPool(config):
         return AvgPool2d(config["kernel_sizes"], config["strides"])
 
 
-def getModel(name, config): 
+def getModel(config): 
     '''
     Fetch and instantiate a deep learning model 
     Args:
@@ -71,24 +71,32 @@ def getModel(name, config):
         config (dict): hyperparameters to put in the model
     Return: model
     '''
-    if name.upper() == "MLP":
+    moudles = nn.Mod
+    for submodule in config:
+    if config["name"].upper() == "MLP":
         from MLP import MLP
         return MLP(config)
-    elif name.upper() == "CNN":
+    elif config["name"].upper() == "CNN":
         from CNN import CNN
         return CNN(config)
-    elif name.upper() == "CONVNET":
+    elif config["name"].upper() == "CONVNET":
         from ConvNet import ConvNet
         return ConvNet(config)
-    elif name.upper() == "RESNETBLOCK":
+    elif config["name"].upper() == "RESNETBLOCK":
         from ResNet import ResNetBlock
         return ResNetBlock(config)
-    elif name.upper() == "RESNEXTBLOCK":
+    elif config["name"].upper() == "RESNEXTBLOCK":
         from ResNet import ResNeXtBlock
         return ResNeXtBlock(config)
-    elif name.upper() == "DENSEBLOCK":
+    elif config["name"].upper() == "DENSEBLOCK":
         from DenseNet import DenseBlock
         return DenseBlock(config)
+    elif config["name"].upper() == "UNETENCODERBLOCK":
+        from UNet import UNetEncoderBlock
+        return UNetEncoderBlock(config)
+    elif config["name"].upper() == "UNETDECODERBLOCK":
+        from UNet import UNetEncoderBlock
+        return UNetEncoderBlock(config)
     
 
 def getLayers(model):

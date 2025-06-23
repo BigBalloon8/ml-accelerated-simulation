@@ -1,4 +1,6 @@
+[
 {
+    "name": "UNetBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [2, 2],
@@ -16,4 +18,5 @@
         "strides": 2
     }
 }
+]
 

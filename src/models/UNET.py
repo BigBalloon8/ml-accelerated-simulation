@@ -75,8 +75,8 @@ class UNetDecoderBlock(nn.Module):
         self.convT = nn.ConvTranspose2d(structure[0], structure[0]//pool_data[1], kernel_size=pool_data[0], stride=pool_data[1])
 
     def forward(self, x, x1):
-        dY, dX = x.size()[2]-x1.size()[2], x.size()[3]-x1.size()[3] # Match dimension of input
-        x1 = F.pad(self.convT(x1), [dX//2, dX-dX//2, dY//2, dY-dY//2])
+        dY, dX = x1.size()[2]-x.size()[2], x1.size()[3]-x.size()[3] # Match dimension of input
+        x = F.pad(self.convT(x), [dX//2, dX-dX//2, dY//2, dY-dY//2])
         x = cat((x,x1), dim=1)
 
         for i, layer in enumerate(self.layers):

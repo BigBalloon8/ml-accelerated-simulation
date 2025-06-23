@@ -1,4 +1,6 @@
+[
 {
+    "name": "CNN",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [4, 10, 10, 4],
@@ -11,3 +13,4 @@
     "dropouts": 0,
     "activation_func": "relu"
 }
+]
