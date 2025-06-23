@@ -4,6 +4,7 @@ import torch.utils._pytree as pytree
 
 import safetensors
 
+import os
 
 def block_reduce(array, block_size, reduction_fn):
     new_shape = []
@@ -52,19 +53,21 @@ def downsample_staggered_velocity_component(u, direction: int, factor: int=16):
     return block_reduce(w, block_size, torch.mean)
 
 
-
 class KolmogrovFlowData(Dataset):
-    def __init__(self, filename):
+    def __init__(self, data_dir):
         super().__init__()
-        # Keep the file open for lazy tensor loading
-        self.loader = safetensors.safe_open(filename, framework="pt").__enter__()
-
+        self.data_dir = data_dir        
+        self.files = os.listdir(data_dir)
+        self.n_samples = len(self.files)*64
+        
     def __len__(self):
-        return len(self.loader.keys())//2
+        return self.n_samples
     
     def __getitem__(self, idx):
-        full = self.loader.get_tensor(f"{idx}_f")
-        coarse = self.loader.get_tensor(f"{idx}_c")
+        file = self.files[idx//64]
+        with safetensors.safe_open(os.path.join(self.data_dir, file)) as f:
+            full = f.get_tensor(f"{idx%64}_f")
+            coarse = f.get_tensor(f"{idx%64}_c")
         factor = round(full.shape[1]//coarse.shape[1])
         result = []
         for j, u in enumerate(full):
@@ -72,13 +75,9 @@ class KolmogrovFlowData(Dataset):
         c_full = torch.stack(result)
 
         dif = c_full - coarse
-        # TODO normalize coarse input 
+        max_velocity = 7
+        coarse /= max_velocity
         return coarse, dif
-
-
-    def __del__(self):
-        # make sure to close the file to stop file corruption
-        self.loader.__exit__(None, None, None)
 
 
 def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=4, prefetch_factor=2):
