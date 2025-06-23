@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from tools import paramToList, structureLoader, getAct
+from models.tools import paramToList, structureLoader, getAct
 
 class MLP(nn.Module):
     """

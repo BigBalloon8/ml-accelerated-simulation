@@ -71,32 +71,31 @@ def getModel(config):
         config (dict): hyperparameters to put in the model
     Return: model
     '''
-    moudles = nn.Mod
     for submodule in config:
-    if config["name"].upper() == "MLP":
-        from MLP import MLP
-        return MLP(config)
-    elif config["name"].upper() == "CNN":
-        from CNN import CNN
-        return CNN(config)
-    elif config["name"].upper() == "CONVNET":
-        from ConvNet import ConvNet
-        return ConvNet(config)
-    elif config["name"].upper() == "RESNETBLOCK":
-        from ResNet import ResNetBlock
-        return ResNetBlock(config)
-    elif config["name"].upper() == "RESNEXTBLOCK":
-        from ResNet import ResNeXtBlock
-        return ResNeXtBlock(config)
-    elif config["name"].upper() == "DENSEBLOCK":
-        from DenseNet import DenseBlock
-        return DenseBlock(config)
-    elif config["name"].upper() == "UNETENCODERBLOCK":
-        from UNet import UNetEncoderBlock
-        return UNetEncoderBlock(config)
-    elif config["name"].upper() == "UNETDECODERBLOCK":
-        from UNet import UNetEncoderBlock
-        return UNetEncoderBlock(config)
+        if submodule["name"].upper() == "MLP":
+            from MLP import MLP
+            return MLP(config)
+        elif submodule["name"].upper() == "CNN":
+            from CNN import CNN
+            return CNN(config)
+        elif submodule["name"].upper() == "CONVNET":
+            from ConvNet import ConvNet
+            return ConvNet(config)
+        elif submodule["name"].upper() == "RESNETBLOCK":
+            from ResNet import ResNetBlock
+            return ResNetBlock(config)
+        elif submodule["name"].upper() == "RESNEXTBLOCK":
+            from ResNet import ResNeXtBlock
+            return ResNeXtBlock(config)
+        elif submodule["name"].upper() == "DENSEBLOCK":
+            from DenseNet import DenseBlock
+            return DenseBlock(config)
+        elif submodule["name"].upper() == "UNETENCODERBLOCK":
+            from UNET import UNetEncoderBlock
+            return UNetEncoderBlock(config)
+        elif submodule["name"].upper() == "UNETDECODERBLOCK":
+            from UNET import UNetDecoderBlock
+            return UNetDecoderBlock(config)
     
 
 def getLayers(model):

@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import cat
-from tools import paramToList, structureLoader, getAct, getModel, getLayers, getPool
+from models.tools import paramToList, structureLoader, getAct, getModel, getLayers, getPool
 
 class UNetEncoderBlock(nn.Module):
     """
