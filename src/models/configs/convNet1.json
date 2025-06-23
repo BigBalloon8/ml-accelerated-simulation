@@ -8,7 +8,10 @@
         "kernel_sizes": 3,
         "strides": 1,
         "paddings": 2,
-        "dropouts": 0.5
+        "group": 1,
+        "dropouts": 0,
+        "activation_func": "relu"
+
     },
     "MLP": {
         "structures": {
@@ -16,6 +19,7 @@
             "hidden_size": [4, 10, 10, 3],
             "output_size": 8192
         },
-        "dropouts": 0.5
+        "dropouts": 0,
+        "activation_func": "selu"
     }
 }
