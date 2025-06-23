@@ -6,7 +6,7 @@ from tools import paramToList, structureLoader, getAct
 class DenseBlock(nn.Module):
     """
     Dense neural network (DenseNet) block with customizable hyperparameters.
-        Args:
+    Args:
         config (dict): A dictionary containing hyperparameters:\n 
             structure (dict): Structure of Model: (\n
                 in_channels (int): Size of input channels,\n
