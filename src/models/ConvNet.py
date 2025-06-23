@@ -1,7 +1,6 @@
 import torch.nn as nn
 from tools import getModel
 
-
 class ConvNet(nn.Module):
     """
     Standard convolutional neural network (CNN) with customizable hyperparameters.

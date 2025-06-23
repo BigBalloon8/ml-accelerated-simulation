@@ -8,17 +8,10 @@ import argparse
 import json
 import os
 from typing import Tuple
-
-from tqdm import tqdm
-import safetensors.torch as st
-
-import argparse
-import json
-import os
-from typing import Tuple
+import random
 
 from data.dataloader import get_kolomogrov_flow_data_loader
-from models import MLP, CNN, Transformer, KAN
+from models import MLP, CNN, Transformer, KAN, getModel
 
 
 def hash_dict(x:dict):
@@ -27,56 +20,9 @@ def hash_dict(x:dict):
 def get_model(name:str, config_file, checkpoint_path)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
         config = json.load(f)
+    print(f"Model Config: {config}")
 
-    if name.upper() == "MLP":
-        model_base = MLP(config)
-    elif name.upper() == "CNN":
-        model_base = CNN(config)
-    elif name.upper() == "KAN":
-        model_base = KAN(config)
-    elif name.upper() == "TRANSFORMER":
-        model_base = Transformer(config)
-    else:
-        raise ValueError(f"Model type [{name}] not supported please select from |MLP|CNN|KAN|TRANSFORMER|")
-    
-    if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path):
-        model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
-        model_weights = st.load_file(model_path)
-        metadata = model_weights.pop("__metadata__")
-        model_base.load_state_dict(model_weights)
-    else:
-        metadata = {"last_epoch:"-1}
-    return model_base, metadata
-    
-        
-def save_model(model:nn.Module, model_type, checkpoint_path, model_config, metadata=None):
-    with open(model_config, "r") as f:
-        config = json.load(f)
-    model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.safetensors")
-    st.save_model(model, model_path, metadata)
-    
-    
-def main(data_path, model_type, model_config, checkpoint_path):
-from models import MLP, CNN, Transformer, KAN
-
-
-def hash_dict(x:dict):
-    return str(hash(json.dumps(x, sort_keys=True)))
-
-def get_model(name:str, config_file, checkpoint_path)-> Tuple[nn.Module, dict]:
-    with open(config_file, "r") as f:
-        config = json.load(f)
-
-    if name.upper() == "MLP":
-        model_base = MLP(config)
-    elif name.upper() == "CNN":
-        model_base = CNN(config)
-    elif name.upper() == "KAN":
-        model_base = KAN(config)
-    elif name.upper() == "TRANSFORMER":
-        model_base = Transformer(config)
-    else:
-        raise ValueError(f"Model type [{name}] not supported please select from |MLP|CNN|KAN|TRANSFORMER|")
+    model_base = getModel(name, config)
     
     if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path):
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
@@ -98,18 +44,19 @@ def save_model(model:nn.Module, model_type, checkpoint_path, model_config, metad
 def main(data_path, model_type, model_config, checkpoint_path):
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
+    random.seed(2025)
 
-    EPOCHS = 128
+    EPOCHS = 10
     batchsize = 32
     gradient_accumulation_steps = 1
     local_batch_size = batchsize // gradient_accumulation_steps
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
+    train_dataloader, validation_dataloader = get_kolomogrov_flow_data_loader(data_path, batchsize=local_batch_size)
+
     model, metadata = get_model(model_type, model_config, checkpoint_path)
     model = model.to(device)
-
-    train_dataloader, validation_dataloader = get_kolomogrov_flow_data_loader(data_path, batchsize=local_batch_size)
 
     criterion = nn.MSELoss()
     val_criterion = nn.MSELoss(reduction="sum")
@@ -146,7 +93,7 @@ def main(data_path, model_type, model_config, checkpoint_path):
 
         save_model(model, model_type, checkpoint_path, model_config, {"last_epoch:":e, "model_config":model_config})    
 
-
+        
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser() 

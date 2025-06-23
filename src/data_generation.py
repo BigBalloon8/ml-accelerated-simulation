@@ -32,9 +32,16 @@ SAVEFILENAME = "data.safetensors"
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 
-gauth = GoogleAuth()
-gauth.CommandLineAuth()
-drive = GoogleDrive(gauth)
+def get_drive():
+    gauth = GoogleAuth(settings_file="settings.yaml")
+    gauth.CommandLineAuth()  # prompts only first run
+    if gauth.access_token_expired:
+        gauth.Refresh()
+    else:
+        gauth.Authorize()
+    gauth.SaveCredentialsFile("credentials.json")
+    return GoogleDrive(gauth)
+
 
 import os.path
 if not os.path.isfile(SAVEFILENAME):
@@ -213,6 +220,7 @@ def main():
                     dataset[f"{num_samples+pi*batch_size+b}_c"] = torch.stack(pair[1].data)[:,b].cpu()
             save_file(dataset, SAVEFILENAME)
 
+            drive = get_drive()
             file2 = drive.CreateFile({'title': f'data{rng+i}_{j}.safetensors'})
             file2.SetContentFile(SAVEFILENAME)
             file2.Upload()
