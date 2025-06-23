@@ -54,7 +54,13 @@ def getAct(name):
     else:
         raise ValueError(f"Activation function {name} does not exist")
 
-
+def getPool(config):
+    if config["method"].lower() == "max":
+        from torch.nn import MaxPool2d
+        return MaxPool2d(config["kernel_sizes"], config["strides"])
+    elif config["method"].lower() == "avg":
+        from torch.nn import AvgPool2d
+        return AvgPool2d(config["kernel_sizes"], config["strides"])
 
 
 def getModel(name, config): 
@@ -92,5 +98,5 @@ def getLayers(model):
         model (class): the model to fetch from
     Return: a dictionary of the layers in the model
     '''
-    return dict(model.named_modules())
+    return list(model.children())
 

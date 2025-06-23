@@ -69,10 +69,11 @@ class ResNeXtBlock(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
+        self.act = getAct(config["activation_func"]) 
         structure = structureLoader(config["structures"])
-        res_layers = getLayers(getModel("ResNetBlock", config))
+        self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
-        self.layers = res_layers["layers"]
+        self.layers = nn.ModuleList(getLayers(getModel("ResNetBlock", config))[0])
         if config["1x1_conv"]:
             self.conv1 = nn.Sequential(nn.Conv2d(structure[0], structure[-1], kernel_size=1), nn.BatchNorm2d(structure[-1]))
         else: 
@@ -91,10 +92,9 @@ class ResNeXtBlock(nn.Module):
 
 
 
-
 if __name__ == "__main__":
     import json
-    with open("src/models/configs/resNetBasicBlock1.json", "r") as f:
+    with open("src/models/configs/resNeXtBlock1.json", "r") as f:
         config = json.load(f)
         resnet = ResNeXtBlock(config)
         print(resnet)
