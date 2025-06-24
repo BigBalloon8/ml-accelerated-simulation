@@ -1,5 +1,3 @@
-import torch.nn as nn
-
 def paramToList(param, dimension):
         '''
         Check and convert hyperparameters into lists
@@ -56,7 +54,15 @@ def getAct(name):
     else:
         raise ValueError(f"Activation function {name} does not exist")
 
+
 def getPool(config):
+    """
+    Load pooling functions
+    Args:
+        config (dict): configuration for pooling function
+    Return:
+        The corresponding pooling function with valid configuration
+    """
     if config["method"].lower() == "max":
         from torch.nn import MaxPool2d
         return MaxPool2d(config["kernel_sizes"], config["strides"])
@@ -78,9 +84,6 @@ def getModel(module):
     elif module["name"].upper() == "CNN":
         from CNN import CNN
         return CNN(module)
-    elif module["name"].upper() == "CONVNET":
-        from ConvNet import ConvNet
-        return ConvNet(module)
     elif module["name"].upper() == "RESNETBLOCK":
         from ResNet import ResNetBlock
         return ResNetBlock(module)
@@ -96,6 +99,10 @@ def getModel(module):
     elif module["name"].upper() == "UNETDECODERBLOCK":
         from UNET import UNetDecoderBlock
         return UNetDecoderBlock(module)
+    elif module["name"].upper() == "TRANSFORMER":
+        pass
+    elif module["name"].upper() == "KAN":
+        pass
     
 
 def getLayers(model):
@@ -106,21 +113,3 @@ def getLayers(model):
     Return: a dictionary of the layers in the model
     '''
     return list(model.children())
-
-    
-class buildModel(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        for i in range(len(config)-1): # checking channel sizes
-            if config[i]["structures"]["out_channels"] != config[i+1]["structures"]["in_channels"]:
-                print(f"in_channels of {config[i+1]["name"]} does not match out_channels of {config[i]["name"]}.\nin_channels of {config[i+1]["name"]} has been corrected to out_channels of {config[i]["name"]}.")
-                config[i+1]["structures"]["in_channels"] = config[i]["structures"]["out_channels"]
-                
-        self.models = nn.ModuleList([getModel(module) for module in config])
-
-    def forward(self, x):
-        for model in self.models:
-            x = model(x)
-        return x
-   
-
