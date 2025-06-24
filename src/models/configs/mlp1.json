@@ -2,9 +2,9 @@
 {   
     "name": "MLP",
     "structures": {
-        "input_size": 8192,
-        "hidden_size": [4, 10, 10, 3],
-        "output_size": 8192
+        "in_channels": 2,
+        "hidden_size": [4, 8, 8, 4],
+        "out_channels": 2
     },
     "dropouts": 0,
     "activation_func": "selu"
