@@ -1,3 +1,5 @@
+import torch.nn as nn
+
 def paramToList(param, dimension):
         '''
         Check and convert hyperparameters into lists
@@ -63,39 +65,37 @@ def getPool(config):
         return AvgPool2d(config["kernel_sizes"], config["strides"])
 
 
-def getModel(config): 
+def getModel(module): 
     '''
     Fetch and instantiate a deep learning model 
     Args:
-        name (str): name of model
-        config (dict): hyperparameters to put in the model
+        module (dict): hyperparameters to put in the model
     Return: model
     '''
-    for submodule in config:
-        if submodule["name"].upper() == "MLP":
-            from MLP import MLP
-            return MLP(config)
-        elif submodule["name"].upper() == "CNN":
-            from CNN import CNN
-            return CNN(config)
-        elif submodule["name"].upper() == "CONVNET":
-            from ConvNet import ConvNet
-            return ConvNet(config)
-        elif submodule["name"].upper() == "RESNETBLOCK":
-            from ResNet import ResNetBlock
-            return ResNetBlock(config)
-        elif submodule["name"].upper() == "RESNEXTBLOCK":
-            from ResNet import ResNeXtBlock
-            return ResNeXtBlock(config)
-        elif submodule["name"].upper() == "DENSEBLOCK":
-            from DenseNet import DenseBlock
-            return DenseBlock(config)
-        elif submodule["name"].upper() == "UNETENCODERBLOCK":
-            from UNET import UNetEncoderBlock
-            return UNetEncoderBlock(config)
-        elif submodule["name"].upper() == "UNETDECODERBLOCK":
-            from UNET import UNetDecoderBlock
-            return UNetDecoderBlock(config)
+    if module["name"].upper() == "MLP":
+        from MLP import MLP
+        return MLP(module)
+    elif module["name"].upper() == "CNN":
+        from CNN import CNN
+        return CNN(module)
+    elif module["name"].upper() == "CONVNET":
+        from ConvNet import ConvNet
+        return ConvNet(module)
+    elif module["name"].upper() == "RESNETBLOCK":
+        from ResNet import ResNetBlock
+        return ResNetBlock(module)
+    elif module["name"].upper() == "RESNEXTBLOCK":
+        from ResNet import ResNeXtBlock
+        return ResNeXtBlock(module)
+    elif module["name"].upper() == "DENSEBLOCK":
+        from DenseNet import DenseBlock
+        return DenseBlock(module)
+    elif module["name"].upper() == "UNETENCODERBLOCK":
+        from UNET import UNetEncoderBlock
+        return UNetEncoderBlock(module)
+    elif module["name"].upper() == "UNETDECODERBLOCK":
+        from UNET import UNetDecoderBlock
+        return UNetDecoderBlock(module)
     
 
 def getLayers(model):
@@ -106,4 +106,21 @@ def getLayers(model):
     Return: a dictionary of the layers in the model
     '''
     return list(model.children())
+
+    
+class buildModel(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        for i in range(len(config)-1): # checking channel sizes
+            if config[i]["structures"]["out_channels"] != config[i+1]["structures"]["in_channels"]:
+                print(f"in_channels of {config[i+1]["name"]} does not match out_channels of {config[i]["name"]}.\nin_channels of {config[i+1]["name"]} has been corrected to out_channels of {config[i]["name"]}.")
+                config[i+1]["structures"]["in_channels"] = config[i]["structures"]["out_channels"]
+                
+        self.models = nn.ModuleList([getModel(module) for module in config])
+
+    def forward(self, x):
+        for model in self.models:
+            x = model(x)
+        return x
+   
 
