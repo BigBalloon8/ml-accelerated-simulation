@@ -71,37 +71,39 @@ def getPool(config):
         return AvgPool2d(config["kernel_sizes"], config["strides"])
 
 
-def getModel(module): 
+def getModel(config, name=None): 
     '''
     Fetch and instantiate a deep learning model 
     Args:
-        module (dict): hyperparameters to put in the model
+        config (dict): hyperparameters to put in the model
+        name (optional): name of model
     Return: model
     '''
-    if module["name"].upper() == "MLP":
+    name = config["name"].upper() if name is None else name.upper()
+    if  name == "MLP":
         from MLP import MLP
-        return MLP(module)
-    elif module["name"].upper() == "CNN":
+        return MLP(config)
+    elif name == "CNN":
         from CNN import CNN
-        return CNN(module)
-    elif module["name"].upper() == "RESNETBLOCK":
+        return CNN(config)
+    elif name == "RESNETBLOCK":
         from ResNet import ResNetBlock
-        return ResNetBlock(module)
-    elif module["name"].upper() == "RESNEXTBLOCK":
+        return ResNetBlock(config)
+    elif name == "RESNEXTBLOCK":
         from ResNet import ResNeXtBlock
-        return ResNeXtBlock(module)
-    elif module["name"].upper() == "DENSEBLOCK":
+        return ResNeXtBlock(config)
+    elif name == "DENSEBLOCK":
         from DenseNet import DenseBlock
-        return DenseBlock(module)
-    elif module["name"].upper() == "UNETENCODERBLOCK":
+        return DenseBlock(config)
+    elif name == "UNETENCODERBLOCK":
         from UNET import UNetEncoderBlock
-        return UNetEncoderBlock(module)
-    elif module["name"].upper() == "UNETDECODERBLOCK":
+        return UNetEncoderBlock(config)
+    elif name == "UNETDECODERBLOCK":
         from UNET import UNetDecoderBlock
-        return UNetDecoderBlock(module)
-    elif module["name"].upper() == "TRANSFORMER":
+        return UNetDecoderBlock(config)
+    elif name == "TRANSFORMER":
         pass
-    elif module["name"].upper() == "KAN":
+    elif name == "KAN":
         pass
     
 
