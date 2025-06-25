@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from models.tools import paramToList, structureLoader, getAct, getModel, getLayers
+from tools import paramToList, structureLoader, getAct, getModel, getLayers
 
 class ResNetBlock(nn.Module):
     """
@@ -31,10 +31,13 @@ class ResNetBlock(nn.Module):
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
         self.layers = nn.ModuleList([nn.Sequential(nn.Conv2d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]), nn.BatchNorm2d(structure[i+1])) for i in range(len(structure)-1)])
-        if config["1x1_conv"]:
-             self.conv1 = nn.Conv2d(structure[0], structure[-1], kernel_size=1)
-        else: 
-             self.conv1 = None
+        try:
+            if config["1x1_conv"]:
+                self.conv1 = nn.Conv2d(structure[0], structure[-1], kernel_size=1)
+            else: 
+                self.conv1 = None
+        except(KeyError):
+            self.conv1 = None
 
     def forward(self, x):
         y = x
@@ -73,7 +76,7 @@ class ResNeXtBlock(nn.Module):
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
-        self.layers = nn.ModuleList(getLayers(getModel("ResNetBlock", config))[0])
+        self.layers = nn.ModuleList(getLayers(getModel(config, "ResNetBlock"))[0])
         if config["1x1_conv"]:
             self.conv1 = nn.Sequential(nn.Conv2d(structure[0], structure[-1], kernel_size=1), nn.BatchNorm2d(structure[-1]))
         else: 
@@ -96,6 +99,6 @@ if __name__ == "__main__":
     import json
     with open("src/models/configs/resNeXtBlock1.json", "r") as f:
         config = json.load(f)
-        resnet = ResNeXtBlock(config)
+        resnet = ResNeXtBlock(config[0])
         print(resnet)
 

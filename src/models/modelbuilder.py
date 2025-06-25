@@ -1,5 +1,5 @@
 import torch.nn as nn
-from models.tools import getModel
+from tools import getModel
 
    
 class buildModel(nn.Module):
