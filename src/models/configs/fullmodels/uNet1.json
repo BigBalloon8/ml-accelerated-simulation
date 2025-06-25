@@ -1,0 +1,162 @@
+[
+{
+    "name": "UNetEncoderBlock",
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64],
+        "out_channels": 64
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
+},
+{
+    "name": "UNetEncoderBlock",
+    "structures": {
+        "in_channels": 64,
+        "hidden_channels": [128, 128],
+        "out_channels": 128
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
+},
+{
+    "name": "UNetEncoderBlock",
+    "structures": {
+        "in_channels": 128,
+        "hidden_channels": [256, 256],
+        "out_channels": 256
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
+},
+{
+    "name": "UNetEncoderBlock",
+    "structures": {
+        "in_channels": 256,
+        "hidden_channels": [512, 512],
+        "out_channels": 512
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
+},
+{
+    "name": "CNN",
+    "structures": {
+        "in_channels": 512,
+        "hidden_channels": [512, 512],
+        "out_channels": 512
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu"
+},
+{
+    "name": "UNetDecoderBlock",
+    "structures": {
+        "in_channels": 512,
+        "hidden_channels": [256, 256],
+        "out_channels": 256
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
+},
+{
+    "name": "UNetDecoderBlock",
+    "structures": {
+        "in_channels": 256,
+        "hidden_channels": [128, 128],
+        "out_channels": 128
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
+},
+{
+    "name": "UNetDecoderBlock",
+    "structures": {
+        "in_channels": 128,
+        "hidden_channels": [64, 64],
+        "out_channels": 64
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
+},
+{
+    "name": "CNN",
+    "structures": {
+        "in_channels": 64,
+        "out_channels": 64
+    },
+    "kernel_sizes": 1,
+    "strides": 1,
+    "paddings": 0,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu"
+}
+]

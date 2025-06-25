@@ -29,7 +29,7 @@ def structureLoader(structure):
     """
     if isinstance(structure, dict):
         hold = list(structure.values())
-        return [hold[0]] + hold[1] + [hold[2]]
+        return [hold[0]] + hold[1] + [hold[2]] if len(hold) == 3 else hold
     else:
         raise TypeError("Structure has to be a dictionary with 3 entries")
 
