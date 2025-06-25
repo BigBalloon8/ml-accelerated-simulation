@@ -24,7 +24,6 @@ class UNetEncoderBlock(nn.Module):
                 strides (int): pooling strides) 
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
-    (forward function returns both pooled and unpooled value)
     """
     def __init__(self, config):
         super().__init__()
@@ -36,9 +35,10 @@ class UNetEncoderBlock(nn.Module):
         self.layers = nn.ModuleList(getLayers(getModel("ResNetBlock", config))[0])
 
     def forward(self, x):
+        x = self.pool(x)
         for i, layer in enumerate(self.layers):
             x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
-        return self.pool(x), x
+        return x
     
 
 
@@ -72,7 +72,7 @@ class UNetDecoderBlock(nn.Module):
         pool_data = list(config["pooling"].values())[1:]
 
         self.layers = nn.ModuleList(getLayers(getModel("ResNetBlock", config))[0])
-        self.convT = nn.ConvTranspose2d(structure[0], structure[0]//pool_data[1], kernel_size=pool_data[0], stride=pool_data[1])
+        self.convT = nn.ConvTranspose2d(structure[0], structure[0]//2, kernel_size=pool_data[0], stride=pool_data[1])
 
     def forward(self, x, x1):
         dY, dX = x1.size()[2]-x.size()[2], x1.size()[3]-x.size()[3] # Match dimension of input

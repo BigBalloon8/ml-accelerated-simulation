@@ -32,7 +32,7 @@ class buildModel(nn.Module):
 
 if __name__ == "__main__":
     import json
-    with open("src/models/configs/uNetBlock1.json", "r") as f:
+    with open("src/models/configs/fullmodels/uNet1.json", "r") as f:
         configs = json.load(f)
-        #unet = UNetDecoderBlock(config)
-        #print(unet)
+        unet = buildModel(configs)
+        print(unet)
