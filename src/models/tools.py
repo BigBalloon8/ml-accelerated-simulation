@@ -103,10 +103,10 @@ def getModel(config, name=None):
         return UNetDecoderBlock(config)
     elif name == "TRANSFORMER":
         from .Transformer import Transformer
-        return Transformer
+        return Transformer(config)
     elif name == "KAN":
         from .KAN import KAN
-        return KAN
+        return KAN(config)
     
 
 def getLayers(model):
