@@ -8,7 +8,7 @@
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
@@ -27,7 +27,7 @@
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
@@ -46,7 +46,7 @@
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
@@ -65,7 +65,7 @@
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
@@ -79,12 +79,12 @@
     "name": "CNN",
     "structures": {
         "in_channels": 512,
-        "hidden_channels": [512, 512],
-        "out_channels": 512
+        "hidden_channels": [1024, 1024],
+        "out_channels": 1024
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu"
@@ -92,13 +92,32 @@
 {
     "name": "UNetDecoderBlock",
     "structures": {
+        "in_channels": 1024,
+        "hidden_channels": [1024, 1024],
+        "out_channels": 512
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 1,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
+},
+{
+    "name": "UNetDecoderBlock",
+    "structures": {
         "in_channels": 512,
-        "hidden_channels": [256, 256],
+        "hidden_channels": [512, 512],
         "out_channels": 256
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
@@ -112,12 +131,12 @@
     "name": "UNetDecoderBlock",
     "structures": {
         "in_channels": 256,
-        "hidden_channels": [128, 128],
+        "hidden_channels": [256, 256],
         "out_channels": 128
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
@@ -131,12 +150,12 @@
     "name": "UNetDecoderBlock",
     "structures": {
         "in_channels": 128,
-        "hidden_channels": [64, 64],
+        "hidden_channels": [128, 128],
         "out_channels": 64
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
