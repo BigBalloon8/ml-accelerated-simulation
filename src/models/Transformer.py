@@ -10,7 +10,7 @@ class ImagePatchEmbedding(nn.Module):
     Args:
         img_size (int): The size (height and width) of the input image.
         patch_size (int): The size of each square patch.
-        in_channels (int): The number of input channels (e.g., 3 for RGB).
+        in_channels (int): The number of input channels.
         d_model (int): The dimension of the output patch embeddings.
     """
     def __init__(self, img_size, patch_size, in_channels, d_model):
