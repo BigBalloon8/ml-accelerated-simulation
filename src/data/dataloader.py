@@ -65,7 +65,7 @@ class KolmogrovFlowData(Dataset):
     
     def __getitem__(self, idx):
         file = self.files[idx//64]
-        with safetensors.safe_open(os.path.join(self.data_dir, file)) as f:
+        with safetensors.safe_open(os.path.join(self.data_dir, file), "pt") as f:
             full = f.get_tensor(f"{idx%64}_f")
             coarse = f.get_tensor(f"{idx%64}_c")
         factor = round(full.shape[1]//coarse.shape[1])
@@ -87,17 +87,17 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=4, prefe
         train_ds,
         batch_size=batchsize,
         shuffle=True,
-        num_workers=num_workers,
+        #num_workers=num_workers,
         pin_memory=True,
         drop_last=True,
-        prefetch_factor=prefetch_factor,
-        persistent_workers=True
+        #prefetch_factor=prefetch_factor,
+        #persistent_workers=True
         )
     validation_loader = DataLoader(
         val_ds,
         batch_size=batchsize,
         shuffle=False,
-        num_workers=0,
+        #num_workers=0,
         pin_memory=True
     )
     return train_loader, validation_loader
