@@ -80,18 +80,18 @@ class KolmogrovFlowData(Dataset):
         return coarse, dif
 
 
-def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=4, prefetch_factor=2):
+def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=10, prefetch_factor=2):
     dataset = KolmogrovFlowData(filename)
     train_ds, val_ds = random_split(dataset, [0.8,0.2])
     train_loader = DataLoader(
         train_ds,
         batch_size=batchsize,
         shuffle=True,
-        #num_workers=num_workers,
+        num_workers=num_workers,
         pin_memory=True,
         drop_last=True,
-        #prefetch_factor=prefetch_factor,
-        #persistent_workers=True
+        prefetch_factor=prefetch_factor,
+        persistent_workers=True
         )
     validation_loader = DataLoader(
         val_ds,
