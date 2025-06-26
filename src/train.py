@@ -83,6 +83,7 @@ def main(data_path, model_type, model_config, checkpoint_path):
         total_loss = 0
         with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
             for coarse, dif in validation_dataloader:
+                coarse, dif = coarse.to(device), dif.to(device)
                 pred = model.forward(coarse)
                 loss = val_criterion.forward(pred, dif)
                 total_loss += loss
