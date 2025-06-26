@@ -43,7 +43,7 @@ class ResNetBlock(nn.Module):
         y = x
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                y = F.dropout(self.act(layer(y)), p=self.dropouts[i], training=True)
+                y = F.dropout(self.act(layer(y)), p=self.dropouts[i], training=self.training)
         y = layer(y)
         if self.conv1 is not None:
                 x = self.conv1(x)
@@ -86,7 +86,7 @@ class ResNeXtBlock(nn.Module):
         y = x
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                y = F.dropout(self.act(layer(y)), p=self.dropouts[i], training=True)
+                y = F.dropout(self.act(layer(y)), p=self.dropouts[i], training=self.training)
         y = layer(y)
         if self.conv1 is not None:
                 x = self.conv1(x)
