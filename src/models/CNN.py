@@ -32,7 +32,7 @@ class CNN(nn.Module):
     def forward(self, x):
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
+                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
         return layer(x)
 
 

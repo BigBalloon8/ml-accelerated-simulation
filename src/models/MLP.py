@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from models.tools import paramToList, structureLoader, getAct
+from tools import paramToList, structureLoader, getAct
 
 class MLP(nn.Module):
     """
@@ -30,7 +30,7 @@ class MLP(nn.Module):
         input_shape = x.shape
         for i, layer in enumerate(self.layers):
             if i > 0 and i < len(self.layers)-1:
-                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
+                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
         return layer(x).reshape((input_shape[0], -1, input_shape[2], input_shape[3]))
 
 

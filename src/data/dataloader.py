@@ -81,7 +81,7 @@ class KolmogrovFlowData(Dataset):
 
 
 def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=4, prefetch_factor=2):
-    dataset = KolmogrovFlowData(filename=filename)
+    dataset = KolmogrovFlowData(filename)
     train_ds, val_ds = random_split(dataset, [0.8,0.2])
     train_loader = DataLoader(
         train_ds,

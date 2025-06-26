@@ -11,7 +11,7 @@ from typing import Tuple
 import random
 
 from data.dataloader import get_kolomogrov_flow_data_loader
-from models import MLP, CNN, Transformer, KAN, getModel
+from models import buildModel
 
 
 def hash_dict(x:dict):
@@ -22,7 +22,7 @@ def get_model(name:str, config_file, checkpoint_path)-> Tuple[nn.Module, dict]:
         config = json.load(f)
     print(f"Model Config: {config}")
 
-    model_base = getModel(name, config)
+    model_base = buildModel(config)
     
     if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path):
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
