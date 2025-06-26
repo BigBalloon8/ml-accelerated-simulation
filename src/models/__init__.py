@@ -1,2 +1,1 @@
-from modelbuilder import buildModel
-import tools
+from .modelbuilder import buildModel

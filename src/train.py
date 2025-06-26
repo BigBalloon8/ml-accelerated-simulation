@@ -30,7 +30,7 @@ def get_model(name:str, config_file, checkpoint_path)-> Tuple[nn.Module, dict]:
         metadata = model_weights.pop("__metadata__")
         model_base.load_state_dict(model_weights)
     else:
-        metadata = {"last_epoch:"-1}
+        metadata = {"last_epoch":-1}
     return model_base, metadata
     
         
@@ -65,7 +65,7 @@ def main(data_path, model_type, model_config, checkpoint_path):
 
     #lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR
 
-    for e in range(metadata["prev_epoch"]+1, EPOCHS):
+    for e in range(metadata["last_epoch"]+1, EPOCHS):
         model.train()
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
