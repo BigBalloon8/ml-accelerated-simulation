@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import cat
-from models.tools import paramToList, structureLoader, getAct
+from tools import paramToList, structureLoader, getAct
 
 class DenseBlock(nn.Module):
     """
@@ -33,7 +33,7 @@ class DenseBlock(nn.Module):
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):
-            y = F.dropout(layer[1](self.act(layer[0](x))), p=self.dropouts[i], training=True)
+            y = F.dropout(layer[1](self.act(layer[0](x))), p=self.dropouts[i], training=self.training)
             x = cat((x,y), dim=1) # concaternate along channels
         return self.conv1[1](self.act(self.conv1[0](x))) # reduce channel size down to the desired output size
 

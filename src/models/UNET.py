@@ -37,7 +37,7 @@ class UNetEncoderBlock(nn.Module):
     def forward(self, x):
         x = self.pool(x)
         for i, layer in enumerate(self.layers):
-            x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
+            x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
         return x
     
 
@@ -80,7 +80,7 @@ class UNetDecoderBlock(nn.Module):
         x = cat((x,x1), dim=1)
 
         for i, layer in enumerate(self.layers):
-            x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
+            x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
         return x
 
 
