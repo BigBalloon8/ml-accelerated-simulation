@@ -8,7 +8,7 @@
     },
     "kernel_sizes": 3,
     "strides": 1,
-    "paddings": 2,
+    "paddings": 1,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu"
@@ -18,10 +18,11 @@
     "name": "MLP", 
     "structures": {
         "in_channels": 2,
-        "hidden_size": [4, 10, 10, 4],
+        "hidden_size": [2, 4, 4, 2],
         "out_channels": 2
     },
     "dropouts": 0,
+    "dimension": [64, 64],
     "activation_func": "selu"
 }
 ]

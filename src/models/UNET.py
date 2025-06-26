@@ -35,10 +35,9 @@ class UNetEncoderBlock(nn.Module):
         self.layers = nn.ModuleList(getLayers(getModel(config, "ResNetBlock"))[0])
 
     def forward(self, x):
-        x = self.pool(x)
         for i, layer in enumerate(self.layers):
             x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
-        return x
+        return self.pool(x), x
     
 
 
@@ -66,6 +65,7 @@ class UNetDecoderBlock(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
+        config["structure"]["in_channels"] *= 2 
         self.act = getAct(config["activation_func"])   
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
