@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from models.tools import paramToList, structureLoader, getAct
+from tools import paramToList, structureLoader, getAct
 
 
 class CNN(nn.Module):
@@ -41,5 +41,5 @@ if __name__ == "__main__":
     import json
     with open("src/models/configs/cnn1.json", "r") as f:
         config = json.load(f)
-        cnn = CNN(config)
+        cnn = CNN(config[0])
         print(cnn)

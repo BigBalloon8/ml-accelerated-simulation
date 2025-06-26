@@ -29,7 +29,7 @@ def structureLoader(structure):
     """
     if isinstance(structure, dict):
         hold = list(structure.values())
-        return [hold[0]] + hold[1] + [hold[2]]
+        return [hold[0]] + hold[1] + [hold[2]] if len(hold) == 3 else hold
     else:
         raise TypeError("Structure has to be a dictionary with 3 entries")
 
@@ -54,7 +54,15 @@ def getAct(name):
     else:
         raise ValueError(f"Activation function {name} does not exist")
 
+
 def getPool(config):
+    """
+    Load pooling functions
+    Args:
+        config (dict): configuration for pooling function
+    Return:
+        The corresponding pooling function with valid configuration
+    """
     if config["method"].lower() == "max":
         from torch.nn import MaxPool2d
         return MaxPool2d(config["kernel_sizes"], config["strides"])
@@ -63,39 +71,40 @@ def getPool(config):
         return AvgPool2d(config["kernel_sizes"], config["strides"])
 
 
-def getModel(config): 
+def getModel(config, name=None): 
     '''
     Fetch and instantiate a deep learning model 
     Args:
-        name (str): name of model
         config (dict): hyperparameters to put in the model
+        name (optional): name of model
     Return: model
     '''
-    for submodule in config:
-        if submodule["name"].upper() == "MLP":
-            from MLP import MLP
-            return MLP(config)
-        elif submodule["name"].upper() == "CNN":
-            from CNN import CNN
-            return CNN(config)
-        elif submodule["name"].upper() == "CONVNET":
-            from ConvNet import ConvNet
-            return ConvNet(config)
-        elif submodule["name"].upper() == "RESNETBLOCK":
-            from ResNet import ResNetBlock
-            return ResNetBlock(config)
-        elif submodule["name"].upper() == "RESNEXTBLOCK":
-            from ResNet import ResNeXtBlock
-            return ResNeXtBlock(config)
-        elif submodule["name"].upper() == "DENSEBLOCK":
-            from DenseNet import DenseBlock
-            return DenseBlock(config)
-        elif submodule["name"].upper() == "UNETENCODERBLOCK":
-            from UNET import UNetEncoderBlock
-            return UNetEncoderBlock(config)
-        elif submodule["name"].upper() == "UNETDECODERBLOCK":
-            from UNET import UNetDecoderBlock
-            return UNetDecoderBlock(config)
+    name = config["name"].upper() if name is None else name.upper()
+    if  name == "MLP":
+        from MLP import MLP
+        return MLP(config)
+    elif name == "CNN":
+        from CNN import CNN
+        return CNN(config)
+    elif name == "RESNETBLOCK":
+        from ResNet import ResNetBlock
+        return ResNetBlock(config)
+    elif name == "RESNEXTBLOCK":
+        from ResNet import ResNeXtBlock
+        return ResNeXtBlock(config)
+    elif name == "DENSEBLOCK":
+        from DenseNet import DenseBlock
+        return DenseBlock(config)
+    elif name == "UNETENCODERBLOCK":
+        from UNET import UNetEncoderBlock
+        return UNetEncoderBlock(config)
+    elif name == "UNETDECODERBLOCK":
+        from UNET import UNetDecoderBlock
+        return UNetDecoderBlock(config)
+    elif name == "TRANSFORMER":
+        pass
+    elif name == "KAN":
+        pass
     
 
 def getLayers(model):
@@ -106,4 +115,3 @@ def getLayers(model):
     Return: a dictionary of the layers in the model
     '''
     return list(model.children())
-

@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import cat
-from models.tools import paramToList, structureLoader, getAct, getModel, getLayers, getPool
+from tools import paramToList, structureLoader, getAct, getModel, getLayers, getPool
 
 class UNetEncoderBlock(nn.Module):
     """
@@ -24,7 +24,6 @@ class UNetEncoderBlock(nn.Module):
                 strides (int): pooling strides) 
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
-    (forward function returns both pooled and unpooled value)
     """
     def __init__(self, config):
         super().__init__()
@@ -33,12 +32,13 @@ class UNetEncoderBlock(nn.Module):
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         self.pool = getPool(config["pooling"])
 
-        self.layers = nn.ModuleList(getLayers(getModel("ResNetBlock", config))[0])
+        self.layers = nn.ModuleList(getLayers(getModel(config, "ResNetBlock"))[0])
 
     def forward(self, x):
+        x = self.pool(x)
         for i, layer in enumerate(self.layers):
             x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
-        return self.pool(x), x
+        return x
     
 
 
@@ -71,8 +71,8 @@ class UNetDecoderBlock(nn.Module):
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         pool_data = list(config["pooling"].values())[1:]
 
-        self.layers = nn.ModuleList(getLayers(getModel("ResNetBlock", config))[0])
-        self.convT = nn.ConvTranspose2d(structure[0], structure[0]//pool_data[1], kernel_size=pool_data[0], stride=pool_data[1])
+        self.layers = nn.ModuleList(getLayers(getModel(config, "ResNetBlock"))[0])
+        self.convT = nn.ConvTranspose2d(structure[0], structure[0]//2, kernel_size=pool_data[0], stride=pool_data[1])
 
     def forward(self, x, x1):
         dY, dX = x1.size()[2]-x.size()[2], x1.size()[3]-x.size()[3] # Match dimension of input
@@ -88,10 +88,10 @@ class UNetDecoderBlock(nn.Module):
 
 if __name__ == "__main__":
     import json
-    with open("src/models/configs/uNetBlock1.json", "r") as f:
+    with open("src/models/configs/uNetEncoderBlock1.json", "r") as f:
         config = json.load(f)
-        #unet = UNetDecoderBlock(config)
-        #print(unet)
+        unet = UNetEncoderBlock(config[0])
+        print(unet)
 
 
 

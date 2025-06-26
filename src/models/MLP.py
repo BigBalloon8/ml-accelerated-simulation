@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models.tools import paramToList, structureLoader, getAct
@@ -9,10 +8,11 @@ class MLP(nn.Module):
     Args:
         config (dict): A dictionary containing hyperparameters:\n
             structure (dict): Structure of Model: (\n
-                input_size (int): Size of input,\n
-                hidden_size (list): Size of hidden layers,\n
-                output_size (int): Size of output)\n
+                in_channels (int): Size of input in unit of channels,\n
+                hidden_channels (list): Size of hidden layers in unit of channels,\n
+                out_channels (int): Size of output in unit of channels)\n
             dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n 
+            dimension (list): dismension of input [width, height]
             activation_func (str): Name of desired activation function\n 
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
@@ -22,16 +22,16 @@ class MLP(nn.Module):
         self.act = getAct(config["activation_func"])
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
+        dim = config["dimension"]
         
-        self.layers = nn.ModuleList([nn.Linear(structure[i], structure[i+1]) for i in range(len(structure)-1)])
+        self.layers = nn.ModuleList([nn.Flatten()]+[nn.Linear(structure[i]*dim[0]*dim[1], structure[i+1]*dim[0]*dim[1]) for i in range(len(structure)-1)])
 
     def forward(self, x):
         input_shape = x.shape
-        x = torch.flatten(1,-1)
         for i, layer in enumerate(self.layers):
-            if i < len(self.layers)-1:
+            if i > 0 and i < len(self.layers)-1:
                 x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=True)
-        return layer(x).reshape(input_shape)
+        return layer(x).reshape((input_shape[0], -1, input_shape[2], input_shape[3]))
 
 
 
@@ -39,5 +39,5 @@ if __name__ == "__main__":
     import json
     with open("src/models/configs/mlp1.json", "r") as f:
         config = json.load(f)
-        mlp = MLP(config)
+        mlp = MLP(config[0])
         print(mlp.get_parameter)

@@ -1,0 +1,16 @@
+[
+{
+    "name": "CNN", 
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64, 64, 64, 64, 64],
+        "out_channels": 2
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 2,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu"
+}
+]

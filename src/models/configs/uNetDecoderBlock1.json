@@ -1,6 +1,6 @@
 [
 {
-    "name": "UNetBlock",
+    "name": "UNetDecoderBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [2, 2],
@@ -19,4 +19,3 @@
     }
 }
 ]
-
