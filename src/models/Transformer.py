@@ -341,7 +341,7 @@ class LearnablePosTransformer(nn.Module):
 if __name__ == "__main__":
     import json
     with open("src/models/configs/transformer1.json", "r") as f:
-        config = json.load(f)
+        config = json.load(f)[0]
         transformer = Transformer(config)
         print(transformer)
 
@@ -365,7 +365,7 @@ optimizer = optim.Adam(transformer.parameters(), lr=0.0001, betas=(0.9, 0.98), e
 
 transformer.train()
 
-for epoch in range(2):
+for epoch in range(1):
     optimizer.zero_grad()
 
     output_image = transformer(src_image_data)

@@ -1,4 +1,4 @@
-{
+[{
     "name": "Transformer",
 
     "d_model": 512,
@@ -12,3 +12,4 @@
 
     "dropout": 0.1
 }
+]
