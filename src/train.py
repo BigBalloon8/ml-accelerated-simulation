@@ -28,7 +28,8 @@ def get_model(name:str, config_file, checkpoint_path, logger)-> Tuple[nn.Module,
         print(f"Model Found in {checkpoint_path}: {name}_{hash_dict(config)}.safetensors")
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
         model_weights = st.load_file(model_path)
-        metadata = model_weights.pop("__metadata__")
+        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.json"), "r") as f:
+            metadata = json.loads(f)
         model_base.load_state_dict(model_weights)
     else:
         metadata = {"last_epoch":-1}
@@ -39,7 +40,9 @@ def save_model(model:nn.Module, model_type, checkpoint_path, model_config, metad
     with open(model_config, "r") as f:
         config = json.load(f)
     model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.safetensors")
-    st.save_model(model, model_path, metadata)
+    with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.json", "w")) as f:
+        json.dump(metadata, f)
+    st.save_model(model, model_path)
     
     
 def main(data_path, model_type, model_config, checkpoint_path, log_file):
