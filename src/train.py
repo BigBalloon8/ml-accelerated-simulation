@@ -93,7 +93,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file):
                 coarse, dif = coarse.to(device), dif.to(device)
                 pred = model.forward(coarse)
                 loss = val_criterion.forward(pred, dif)
-                total_loss += loss
+                total_loss += loss.item()
 
                 pbar.update(local_batch_size)
                 pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.4f}")
