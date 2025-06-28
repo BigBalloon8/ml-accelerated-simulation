@@ -1,0 +1,87 @@
+[
+{
+    "name": "ResNeXtBlock",
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64],
+        "out_channels": 2
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 2,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": false
+},{
+    "name": "ResNeXtBlock",
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64],
+        "out_channels": 2
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 2,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": false
+},{
+    "name": "ResNeXtBlock",
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64],
+        "out_channels": 2
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 2,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": false
+},{
+    "name": "ResNeXtBlock",
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64],
+        "out_channels": 2
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 2,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": false
+},{
+    "name": "ResNeXtBlock",
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64],
+        "out_channels": 2
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 2,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": false
+},{
+    "name": "ResNeXtBlock",
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64],
+        "out_channels": 2
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 2,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": false
+}
+]
