@@ -51,6 +51,9 @@ def getAct(name):
     elif name.lower() == "gelu":
         from torch.nn.functional import gelu
         return gelu
+    elif name.lower() == "silu":
+        from torch.nn.functional import silu
+        return silu
     else:
         raise ValueError(f"Activation function {name} does not exist")
 
@@ -104,9 +107,9 @@ def getModel(config, name=None):
     elif name == "TRANSFORMER":
         from .Transformer import Transformer
         return Transformer(config)
-    elif name == "KAN":
-        from .KAN import KAN
-        return KAN(config)
+    elif name == "FASTCONVKAN2D":
+        from .FastKAN import FastKANConvNDLayer
+        return FastKANConvNDLayer(config)
     
 
 def getLayers(model):

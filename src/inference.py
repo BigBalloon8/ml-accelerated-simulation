@@ -19,7 +19,8 @@ import json
 import os
 from typing import Tuple
 
-from models import MLP, CNN, Transformer, KAN
+from models import MLP, CNN, Transformer
+from src.models import FastKAN
 
 def hash_dict(x:dict):
     return str(hash(json.dumps(x, sort_keys=True)))
@@ -33,7 +34,7 @@ def get_model(name:str, config_file, checkpoint_path)-> Tuple[nn.Module, dict]:
     elif name.upper() == "CNN":
         model_base = CNN(config)
     elif name.upper() == "KAN":
-        model_base = KAN(config)
+        model_base = FastKAN(config)
     elif name.upper() == "TRANSFORMER":
         model_base = Transformer(config)
     else:
