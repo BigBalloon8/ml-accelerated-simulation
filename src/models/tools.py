@@ -81,30 +81,32 @@ def getModel(config, name=None):
     '''
     name = config["name"].upper() if name is None else name.upper()
     if  name == "MLP":
-        from MLP import MLP
+        from .MLP import MLP
         return MLP(config)
     elif name == "CNN":
-        from CNN import CNN
+        from .CNN import CNN
         return CNN(config)
     elif name == "RESNETBLOCK":
-        from ResNet import ResNetBlock
+        from .ResNet import ResNetBlock
         return ResNetBlock(config)
     elif name == "RESNEXTBLOCK":
-        from ResNet import ResNeXtBlock
+        from .ResNet import ResNeXtBlock
         return ResNeXtBlock(config)
     elif name == "DENSEBLOCK":
-        from DenseNet import DenseBlock
+        from .DenseNet import DenseBlock
         return DenseBlock(config)
     elif name == "UNETENCODERBLOCK":
-        from UNET import UNetEncoderBlock
+        from .UNET import UNetEncoderBlock
         return UNetEncoderBlock(config)
     elif name == "UNETDECODERBLOCK":
-        from UNET import UNetDecoderBlock
+        from .UNET import UNetDecoderBlock
         return UNetDecoderBlock(config)
     elif name == "TRANSFORMER":
-        pass
+        from .Transformer import Transformer
+        return Transformer(config)
     elif name == "KAN":
-        pass
+        from .KAN import KAN
+        return KAN(config)
     
 
 def getLayers(model):

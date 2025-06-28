@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import cat
-from tools import paramToList, structureLoader, getAct
+from .tools import paramToList, structureLoader, getAct
 
 class DenseBlock(nn.Module):
     """

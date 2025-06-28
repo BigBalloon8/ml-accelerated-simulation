@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from tools import paramToList, structureLoader, getAct
+from .tools import paramToList, structureLoader, getAct
 
 class MLP(nn.Module):
     """
@@ -24,12 +24,13 @@ class MLP(nn.Module):
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         dim = config["dimension"]
         
-        self.layers = nn.ModuleList([nn.Flatten()]+[nn.Linear(structure[i]*dim[0]*dim[1], structure[i+1]*dim[0]*dim[1]) for i in range(len(structure)-1)])
+        self.layers = nn.ModuleList([nn.Linear(structure[i]*dim[0]*dim[1], structure[i+1]*dim[0]*dim[1]) for i in range(len(structure)-1)])
 
     def forward(self, x):
         input_shape = x.shape
+        x = x.flatten(1, -1)
         for i, layer in enumerate(self.layers):
-            if i > 0 and i < len(self.layers)-1:
+            if i < len(self.layers)-1:
                 x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
         return layer(x).reshape((input_shape[0], -1, input_shape[2], input_shape[3]))
 

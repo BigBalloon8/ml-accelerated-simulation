@@ -1,5 +1,5 @@
 import torch.nn as nn
-from tools import getModel
+from .tools import getModel
 
    
 class buildModel(nn.Module):
@@ -12,7 +12,7 @@ class buildModel(nn.Module):
         super().__init__()
         for i in range(len(configs)-1): # checking channel sizes
             if configs[i]["structures"]["out_channels"] != configs[i+1]["structures"]["in_channels"]:
-                print(f"in_channels of {configs[i+1]["name"]} does not match out_channels of {configs[i]["name"]}.\nin_channels of {configs[i+1]["name"]} has been corrected to out_channels of {configs[i]["name"]}.")
+                print(f"in_channels of {configs[i+1]['name']} does not match out_channels of {configs[i]['name']}.\nin_channels of {configs[i+1]['name']} has been corrected to out_channels of {configs[i]['name']}.")
                 configs[i+1]["structures"]["in_channels"] = configs[i]["structures"]["out_channels"]
         self.models_name = [config["name"] for config in configs]
 
