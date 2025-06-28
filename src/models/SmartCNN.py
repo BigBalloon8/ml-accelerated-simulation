@@ -4,8 +4,8 @@ import torch.nn as nn
 class SmartCNN(nn.Module):
     def __init__(self, config):
         super().__init__()
-        vector_channels = config["vector_components"]
-        full_channels = config["combined_cnn"]
+        vector_channels = config["structures"]["vector_components"]
+        full_channels = config["structures"]["combined_cnn"]
         self.vector_component_convs = nn.ModuleList()
         self.full_channel_convs = nn.ModuleList()
         for i in range(len(vector_channels)-1):
@@ -14,7 +14,7 @@ class SmartCNN(nn.Module):
             )
         for i in range(len(full_channels)-1):
             self.full_channel_convs.append(
-                nn.Conv2d(vector_channels[i], vector_channels[i+1])
+                nn.Conv2d(full_channels[i], full_channels[i+1], 3 , 1, 1)
             )
     
     def forward(self, x):
