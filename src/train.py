@@ -96,7 +96,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 total_loss += loss.item()
 
                 pbar.update(local_batch_size)
-                pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
+                pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item()/batchsize:.8f}")
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
 
         save_model(model, model_type, checkpoint_path, model_config, {"last_epoch:":e, "model_config":model_config})    
