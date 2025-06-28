@@ -1,0 +1,11 @@
+[
+    {
+    "name": "FastKANConv",
+    "structures": {
+                   "in_channels": 2,
+                   "hidden_channels": [64, 64, 64, 64, 64, 64],
+                   "out_channels": 2
+                  },
+    "base_activation": "silu"
+    }
+]
