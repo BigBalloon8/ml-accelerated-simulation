@@ -17,14 +17,14 @@ from log import Logger
 def hash_dict(x:dict):
     return str(hash(json.dumps(x, sort_keys=True)))
 
-def get_model(name:str, config_file, checkpoint_path, logger)-> Tuple[nn.Module, dict]:
+def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
         config = json.load(f)
     logger.log(f"Model Config: {config}")
 
     model_base = buildModel(config)
     
-    if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path):
+    if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
         print(f"Model Found in {checkpoint_path}: {name}_{hash_dict(config)}.safetensors")
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
         model_weights = st.load_file(model_path)
@@ -45,7 +45,7 @@ def save_model(model:nn.Module, model_type, checkpoint_path, model_config, metad
     st.save_model(model, model_path)
     
     
-def main(data_path, model_type, model_config, checkpoint_path, log_file):
+def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run):
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
     random.seed(2025)
@@ -61,7 +61,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file):
 
     train_dataloader, validation_dataloader = get_kolomogrov_flow_data_loader(data_path, batchsize=local_batch_size)
 
-    model, metadata = get_model(model_type, model_config, checkpoint_path, logger)
+    model, metadata = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
 
     criterion = nn.MSELoss()
@@ -96,7 +96,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file):
                 total_loss += loss.item()
 
                 pbar.update(local_batch_size)
-                pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
+                pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item()/batchsize:.8f}")
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
 
         save_model(model, model_type, checkpoint_path, model_config, {"last_epoch:":e, "model_config":model_config})    
@@ -110,4 +110,5 @@ if __name__ == "__main__":
     ap.add_argument("--model_config", default="./model.config", help="path to model config")
     ap.add_argument("--checkpoint_path", default=".", help="path to model config")
     ap.add_argument("--log_file", default="/content/drive/MyDrive/logs/general.log", help="path to log file")
+    ap.add_argument("--new_run", action="store_true")
     main(**ap.parse_args().__dict__)

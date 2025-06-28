@@ -90,7 +90,7 @@ def downsample_staggered_velocity(
     return grids.GridVariableVector(tuple(result))
 
 
-def main(model_configs, log_file):
+def main(model_configs, log_file, sim_off):
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
 
@@ -98,93 +98,94 @@ def main(model_configs, log_file):
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    sample_size = 1024
-    high_res = 1024
-    low_res = 64
-    batch_size = 64
-    density = 1.0
-    max_velocity = 7.0
-    peak_wavenumber = 4.0
-    cfl_safety_factor = 0.5
-    viscosity = 1e-3
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    torch.set_default_dtype(torch.float64)
-    burn_in_time = 1
-    simulation_time = 30
-    diam = 2 * torch.pi
+    if not sim_off:
+        sample_size = 1024
+        high_res = 1024
+        low_res = 64
+        batch_size = 64
+        density = 1.0
+        max_velocity = 7.0
+        peak_wavenumber = 4.0
+        cfl_safety_factor = 0.5
+        viscosity = 1e-3
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        torch.set_default_dtype(torch.float64)
+        burn_in_time = 1
+        simulation_time = 30
+        diam = 2 * torch.pi
 
-    step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
+        step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
 
-    full_grid = grids.Grid((high_res, high_res), domain=((0, diam), (0, diam)), device=device)
+        full_grid = grids.Grid((high_res, high_res), domain=((0, diam), (0, diam)), device=device)
 
-    coarse_grid = grids.Grid((low_res, low_res), domain=((0, diam), (0, diam)), device=device)
+        coarse_grid = grids.Grid((low_res, low_res), domain=((0, diam), (0, diam)), device=device)
 
-    dt = stable_time_step(
-        dx=min(full_grid.step),
-        max_velocity=max_velocity,
-        max_courant_number=cfl_safety_factor,
-        viscosity=viscosity,
-    )
+        dt = stable_time_step(
+            dx=min(full_grid.step),
+            max_velocity=max_velocity,
+            max_courant_number=cfl_safety_factor,
+            viscosity=viscosity,
+        )
 
-    delta_t = stable_time_step(
-        dx=min(coarse_grid.step),
-        max_velocity=max_velocity,
-        max_courant_number=cfl_safety_factor,
-        viscosity=viscosity,
-    )
-
-
-    inner_step = round(delta_t/dt)
+        delta_t = stable_time_step(
+            dx=min(coarse_grid.step),
+            max_velocity=max_velocity,
+            max_courant_number=cfl_safety_factor,
+            viscosity=viscosity,
+        )
 
 
-    v0_full = filtered_velocity_field(
-        full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
-        device=device, batch_size=batch_size,)
-    pressure_bc = boundaries.get_pressure_bc_from_velocity(v0_full)
-
-    v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
+        inner_step = round(delta_t/dt)
 
 
-    forcing_fn_full = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
-        grid=full_grid, offsets=(v0_full[0].offset, v0_full[1].offset))
+        v0_full = filtered_velocity_field(
+            full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
+            device=device, batch_size=batch_size,)
+        pressure_bc = boundaries.get_pressure_bc_from_velocity(v0_full)
 
-    forcing_fn_coarse = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
-        grid=coarse_grid, offsets=(v0_coarse[0].offset, v0_coarse[1].offset))
+        v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
 
-    ns2d_full = NavierStokes2DFVMProjection(
-        viscosity=viscosity,
-        grid=full_grid,
-        bcs=(v0_full[0].bc, v0_full[1].bc),
-        density=density,
-        drag=0.1,
-        forcing=forcing_fn_full,
-        solver=step_fn,
-        # set_laplacian=False,
-    ).to(v0_full.device)
 
-    ns2d_coarse = NavierStokes2DFVMProjection(
-        viscosity=viscosity,
-        grid=coarse_grid,
-        bcs=(v0_coarse[0].bc, v0_coarse[1].bc),
-        density=density,
-        drag=0.1,
-        forcing=forcing_fn_coarse,
-        solver=step_fn,
-        # set_laplacian=False,
-    ).to(v0_coarse.device)
+        forcing_fn_full = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
+            grid=full_grid, offsets=(v0_full[0].offset, v0_full[1].offset))
 
-    v = v0_full
-    start = time.time()
-    for i in range(round(0.25/dt)):
-        v, p = step_fn.forward(v, dt, equation=ns2d_full)
-    end = time.time()
-    logger.log(f"Full Simulation, Time: {end-start}, N-Steps: {round(0.25/dt)}, dt={dt}")
+        forcing_fn_coarse = KolmogorovForcing(diam=diam, wave_number=int(peak_wavenumber),
+            grid=coarse_grid, offsets=(v0_coarse[0].offset, v0_coarse[1].offset))
 
-    v = v0_coarse
-    for i in range(round(0.25/delta_t)):
-        v, p = step_fn.forward(v, delta_t, equation=ns2d_coarse)
-    end = time.time()
-    logger.log(f"Coarse Simulation, Time: {end-start}, N-Steps: {round(0.25/delta_t)}, dt={delta_t}")
+        ns2d_full = NavierStokes2DFVMProjection(
+            viscosity=viscosity,
+            grid=full_grid,
+            bcs=(v0_full[0].bc, v0_full[1].bc),
+            density=density,
+            drag=0.1,
+            forcing=forcing_fn_full,
+            solver=step_fn,
+            # set_laplacian=False,
+        ).to(v0_full.device)
+
+        ns2d_coarse = NavierStokes2DFVMProjection(
+            viscosity=viscosity,
+            grid=coarse_grid,
+            bcs=(v0_coarse[0].bc, v0_coarse[1].bc),
+            density=density,
+            drag=0.1,
+            forcing=forcing_fn_coarse,
+            solver=step_fn,
+            # set_laplacian=False,
+        ).to(v0_coarse.device)
+
+        v = v0_full
+        start = time.time()
+        for i in range(round(0.25/dt)):
+            v, p = step_fn.forward(v, dt, equation=ns2d_full)
+        end = time.time()
+        logger.log(f"Full Simulation, Time: {end-start}, N-Steps: {round(0.25/dt)}, dt={dt}")
+
+        v = v0_coarse
+        for i in range(round(0.25/delta_t)):
+            v, p = step_fn.forward(v, delta_t, equation=ns2d_coarse)
+        end = time.time()
+        logger.log(f"Coarse Simulation, Time: {end-start}, N-Steps: {round(0.25/delta_t)}, dt={delta_t}")
     
     
     if os.path.isdir(model_configs) :
@@ -214,5 +215,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser() 
     ap.add_argument("--model_configs", default="./model.config", help="path to model config")
     ap.add_argument("--log_file", default="/content/drive/MyDrive/logs/speed.log", help="path to log file")
+    ap.add_argument("--sim_off", action="store_false", help="wether to run simulation times")
     with torch.inference_mode():
         main(**ap.parse_args().__dict__)
