@@ -39,6 +39,7 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[n
 def save_model(model:nn.Module, model_type, checkpoint_path, model_config, metadata=None):
     with open(model_config, "r") as f:
         config = json.load(f)
+    metadata["model_config"] = config
     model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.safetensors")
     with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.json"), "w") as f:
         json.dump(metadata, f)
@@ -100,7 +101,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item()/batchsize:.8f}")
             logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
 
-        save_model(model, model_type, checkpoint_path, model_config, {"last_epoch:":e, "model_config":model_config})    
+        save_model(model, model_type, checkpoint_path, model_config, {"last_epoch:":e})    
 
         
 
