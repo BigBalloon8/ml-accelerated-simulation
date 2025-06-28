@@ -74,18 +74,20 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
     for e in range(metadata["last_epoch"]+1, EPOCHS):
         model.train()
+        total_loss = 0
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
                 pred = model.forward(coarse)
                 loss = criterion.forward(pred, dif)
                 loss.backward()
-                if (i+1)%gradient_accumulation_steps==0:
-                    opt.step()
-                    opt.zero_grad()
+                total_loss = loss.item()*batchsize
+                #if (i+1)%gradient_accumulation_steps==0:
+                opt.step()
+                opt.zero_grad()
                 pbar.update(local_batch_size)
                 pbar.set_description(f"Epoch {e+1} Loss: {loss.item():.8f}")
-        logger.log(f"Train Loss at Epoch {e+1}: {loss}")
+        logger.log(f"Train Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
 
         model.eval()
         with torch.no_grad():
@@ -98,8 +100,8 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     total_loss += loss.item()
 
                     pbar.update(local_batch_size)
-                    pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item()/batchsize:.8f}")
-            logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
+                    pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
+        logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
 
         save_model(model, model_type, checkpoint_path, model_config, {"last_epoch:":e})    
 

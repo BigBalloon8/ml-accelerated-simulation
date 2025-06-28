@@ -4,6 +4,7 @@
         "structures":{
             "vector_components":[2, 128, 128, 128],
             "combined_cnn":[128, 128, 128, 64, 2]
-        }
+        },
+        "bn": true
     }
 ]
