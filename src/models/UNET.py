@@ -65,7 +65,7 @@ class UNetDecoderBlock(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        config["structure"]["in_channels"] *= 2 
+        #config["structures"]["in_channels"] *= 2 
         self.act = getAct(config["activation_func"])   
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
@@ -75,8 +75,9 @@ class UNetDecoderBlock(nn.Module):
         self.convT = nn.ConvTranspose2d(structure[0], structure[0]//2, kernel_size=pool_data[0], stride=pool_data[1])
 
     def forward(self, x, x1):
+        x=self.convT(x)
         dY, dX = x1.size()[2]-x.size()[2], x1.size()[3]-x.size()[3] # Match dimension of input
-        x = F.pad(self.convT(x), [dX//2, dX-dX//2, dY//2, dY-dY//2])
+        x = F.pad(x, [dX//2, dX-dX//2, dY//2, dY-dY//2])
         x = cat((x,x1), dim=1)
 
         for i, layer in enumerate(self.layers):
