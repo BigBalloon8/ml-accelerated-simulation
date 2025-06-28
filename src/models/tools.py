@@ -108,8 +108,11 @@ def getModel(config, name=None):
         from .KAN import KAN
         return KAN(config)
     elif name == "SMARTCONV":
-        from .SmartCNN import SmartCNN
-        return SmartCNN(config)
+        from .SmartCNN import SmartCNN, SmartCNNBN
+        if config["bn"]:
+            return SmartCNNBN(config)
+        else:
+            return SmartCNN(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
