@@ -13,6 +13,7 @@ import time
 import os
 import argparse
 import json
+from tqdm import tqdm
 
 from models import buildModel
 from log import Logger
@@ -102,7 +103,7 @@ def main(model_configs, log_file, sim_off):
         sample_size = 1024
         high_res = 1024
         low_res = 64
-        batch_size = 64
+        batch_size = 1
         density = 1.0
         max_velocity = 7.0
         peak_wavenumber = 4.0
@@ -134,9 +135,7 @@ def main(model_configs, log_file, sim_off):
             viscosity=viscosity,
         )
 
-
         inner_step = round(delta_t/dt)
-
 
         v0_full = filtered_velocity_field(
             full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
@@ -176,13 +175,14 @@ def main(model_configs, log_file, sim_off):
 
         v = v0_full
         start = time.time()
-        for i in range(round(0.25/dt)):
+        for i in tqdm(range(round(0.05/dt))):
             v, p = step_fn.forward(v, dt, equation=ns2d_full)
         end = time.time()
         logger.log(f"Full Simulation, Time: {end-start}, N-Steps: {round(0.25/dt)}, dt={dt}")
 
         v = v0_coarse
-        for i in range(round(0.25/delta_t)):
+        start = time.time()
+        for i in tqdm(range(round(0.05/delta_t))):
             v, p = step_fn.forward(v, delta_t, equation=ns2d_coarse)
         end = time.time()
         logger.log(f"Coarse Simulation, Time: {end-start}, N-Steps: {round(0.25/delta_t)}, dt={delta_t}")
@@ -195,16 +195,28 @@ def main(model_configs, log_file, sim_off):
     example_data = torch.rand(1, 2, 64, 64).to(device)
 
     for model_config_file in model_config_files:
+        error = False
         with open(model_config_file, "r") as f:
             model_config = json.load(f)
         logger.log(model_config_file)
         logger.log(model_config)
-        model = buildModel(model_config).to(device)
+        try:
+            model = buildModel(model_config).to(device)
+        except Exception as e:
+            logger.log(f"Error with building [{model_config_file}]")
+            continue
         start = time.time()
         n_step = 1000
 
-        for i in range(n_step):
-            model(example_data)
+        for i in tqdm(range(n_step)):
+            try:
+                y = model(example_data)
+            except:
+                error = True
+                break
+        if error or y.shape !=torch.Size([1, 2, 64, 64]):
+            logger.log(f"Output size: {y.shape}, Error with Running [{model_config_file}]")
+        
 
         end = time.time()
         logger.log(f"Model Speed: {(end-start)/n_step:.4f}s/step\n")
@@ -215,6 +227,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser() 
     ap.add_argument("--model_configs", default="./model.config", help="path to model config")
     ap.add_argument("--log_file", default="/content/drive/MyDrive/logs/speed.log", help="path to log file")
-    ap.add_argument("--sim_off", action="store_false", help="wether to run simulation times")
+    ap.add_argument("--sim_off", action="store_true", help="wether to run simulation times")
     with torch.inference_mode():
         main(**ap.parse_args().__dict__)
