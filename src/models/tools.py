@@ -107,9 +107,12 @@ def getModel(config, name=None):
     elif name == "TRANSFORMER":
         from .Transformer import Transformer
         return Transformer(config)
-    elif name == "FASTCONVKAN2D":
-        from .FastKAN import FastKANConvNDLayer
-        return FastKANConvNDLayer(config)
+    elif name == "FASTKANCONV":
+        from .FastKANConv import FastKANConvND
+        return FastKANConvND(config)
+    elif name == "FASTKAN":
+        from .FastKAN import FastKAN
+        return FastKAN(config)
     
 
 def getLayers(model):

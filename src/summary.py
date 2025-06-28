@@ -3,8 +3,10 @@ from models import buildModel
 import json
 import torch
 
-with open("src/models/configs/resNetBasicBlock1.json", "r") as f:
+with open("/home/andrewrightj/ml-accelerated-simulation/src/models/configs/fullmodels/fastkan1.json", "r") as f:
     configs = json.load(f)
     unet = buildModel(configs)
     print(unet)
-ts.summary(unet, depth=5, input_data=torch.rand(1,2, 64, 64))
+unet.train()
+ts.summary(unet)
+print(unet(torch.rand(1, 2, 64, 64)).shape)

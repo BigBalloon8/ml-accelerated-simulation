@@ -35,7 +35,7 @@ class FastKANConvNDLayer(nn.Module):
         self.groups = groups
         self.ndim = ndim
         self.grid_size = grid_size
-        self.base_activation = base_activation()
+        self.base_activation = base_activation
         self.grid_range = grid_range
         self.norm_kwargs = norm_kwargs
 
@@ -144,6 +144,5 @@ class FastKANConvND(nn.Module):
         
     def forward(self, x):
         for i, layer in enumerate(self.layers):
-            if i < len(self.layers) - 1:
-                x = layer(x)
+            x = layer(x)
         return x

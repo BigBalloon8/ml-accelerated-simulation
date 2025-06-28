@@ -38,7 +38,7 @@ class RadialBasisFunction(nn.Module):
     ):
         super().__init__()
         grid = torch.linspace(grid_min, grid_max, num_grids)
-        self.grid = torch.nn.Parameter(grid, requires_grad=False)
+        self.grid = torch.nn.Parameter(grid, requires_grad=True)
         self.denominator = denominator or (grid_max - grid_min) / (num_grids - 1)
 
     def forward(self, x):
@@ -63,7 +63,7 @@ class FastKANLayer(nn.Module):
         self.spline_linear = SplineLinear(input_dim * num_grids, output_dim, spline_weight_init_scale)
         self.use_base_update = use_base_update
         if use_base_update:
-            self.base_activation = base_activation()
+            self.base_activation = base_activation
             self.base_linear = nn.Linear(input_dim, output_dim)
 
     def forward(self, x, time_benchmark=False):
@@ -82,7 +82,7 @@ class FastKAN(nn.Module):
         super(FastKAN, self).__init__()
 
         self.structure = structureLoader(config["structures"])
-        self.dim = config["dimension"]
+        self.dim = config.get("dimension", [1, 1])
         self.base_activation = getAct(config.get("base_activation", "silu"))
 
         self.grid_min, self.grid_max = config["grid_range"]
@@ -102,7 +102,11 @@ class FastKAN(nn.Module):
                                                   spline_weight_init_scale = self.spline_weight_init_scale) for i in range(len(self.structure)-1)])
 
     def forward(self, x):
-        for layer in self.layers:
+        input_shape = x.shape
+        x = x.flatten(1, -1)
+        for i, layer in enumerate(self.layers):
             x = layer(x)
-            x = self.dropout(x)
+            if i+1 != len(self.layers):
+                x = self.dropout(x)
+        x = x.reshape(input_shape)
         return x
