@@ -107,6 +107,11 @@ def getModel(config, name=None):
     elif name == "KAN":
         from .KAN import KAN
         return KAN(config)
+    elif name == "SMARTCONV":
+        from .SmartCNN import SmartCNN
+        return SmartCNN(config)
+    else:
+        raise ValueError(f"Model Name [{name}] not defined")
     
 
 def getLayers(model):

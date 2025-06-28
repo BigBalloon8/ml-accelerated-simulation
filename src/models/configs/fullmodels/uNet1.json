@@ -169,7 +169,7 @@
     "name": "CNN",
     "structures": {
         "in_channels": 64,
-        "out_channels": 64
+        "out_channels": 2
     },
     "kernel_sizes": 1,
     "strides": 1,
