@@ -86,7 +86,7 @@ def getModel(config, name=None):
     elif name == "CNN":
         from .CNN import CNN
         return CNN(config)
-    elif name == "RESNETBLOCK":
+    elif name == "RESNETBLOCK" or name == "RESNETBASICBLOCK" or name == "RESNETBOTTLENECKBLOCK":
         from .ResNet import ResNetBlock
         return ResNetBlock(config)
     elif name == "RESNEXTBLOCK":
