@@ -135,9 +135,7 @@ def main(model_configs, log_file, sim_off):
             viscosity=viscosity,
         )
 
-
         inner_step = round(delta_t/dt)
-
 
         v0_full = filtered_velocity_field(
             full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
@@ -183,6 +181,7 @@ def main(model_configs, log_file, sim_off):
         logger.log(f"Full Simulation, Time: {end-start}, N-Steps: {round(0.25/dt)}, dt={dt}")
 
         v = v0_coarse
+        start = time.time()
         for i in tqdm(range(round(0.05/delta_t))):
             v, p = step_fn.forward(v, delta_t, equation=ns2d_coarse)
         end = time.time()
@@ -196,16 +195,28 @@ def main(model_configs, log_file, sim_off):
     example_data = torch.rand(1, 2, 64, 64).to(device)
 
     for model_config_file in model_config_files:
+        error = False
         with open(model_config_file, "r") as f:
             model_config = json.load(f)
         logger.log(model_config_file)
         logger.log(model_config)
-        model = buildModel(model_config).to(device)
+        try:
+            model = buildModel(model_config).to(device)
+        except Exception as e:
+            logger.log(f"Error with building [{model_config_file}]")
+            continue
         start = time.time()
         n_step = 1000
 
         for i in tqdm(range(n_step)):
-            model(example_data)
+            try:
+                y = model(example_data)
+            except:
+                error = True
+                break
+        if error or y.shape !=torch.Size([1, 2, 64, 64]):
+            logger.log(f"Output size: {y.shape}, Error with Running [{model_config_file}]")
+        
 
         end = time.time()
         logger.log(f"Model Speed: {(end-start)/n_step:.4f}s/step\n")
