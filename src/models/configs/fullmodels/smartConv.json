@@ -1,0 +1,9 @@
+[
+    {
+        "name":"SMARTCONV",
+        "structures":{
+            "vector_components":[1, 64, 64, 64],
+            "combined_cnn":[128, 128, 128, 64, 2]
+        }
+    }
+]
