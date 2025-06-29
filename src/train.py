@@ -53,7 +53,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
     logger = Logger(model_type, log_file)
 
-    EPOCHS = 10
+    EPOCHS = 50
     batchsize = 32
     gradient_accumulation_steps = 1
     local_batch_size = batchsize // gradient_accumulation_steps
