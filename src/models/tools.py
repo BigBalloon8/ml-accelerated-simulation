@@ -92,7 +92,7 @@ def getModel(config, name=None):
     elif name == "RESNEXTBLOCK":
         from .ResNet import ResNeXtBlock
         return ResNeXtBlock(config)
-    elif name == "DENSEBLOCK":
+    elif name == "DENSENETBLOCK":
         from .DenseNet import DenseBlock
         return DenseBlock(config)
     elif name == "UNETENCODERBLOCK":
