@@ -29,7 +29,7 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[n
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
         model_weights = st.load_file(model_path)
         with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.json"), "r") as f:
-            metadata = json.loads(f)
+            metadata = json.load(f)
         model_base.load_state_dict(model_weights)
     else:
         metadata = {"last_epoch":-1}
@@ -69,6 +69,8 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     val_criterion = nn.MSELoss(reduction="sum")
 
     opt = torch.optim.Adam(model.parameters())
+    
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, patience=5)
 
     #lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR
 
@@ -102,6 +104,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     pbar.update(local_batch_size)
                     pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
+        scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
         save_model(model, model_type, checkpoint_path, model_config, {"last_epoch:":e})    
 
