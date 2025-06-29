@@ -3,8 +3,8 @@ from models import buildModel
 import json
 import torch
 
-with open("src/models/configs/fullmodels/uNet1.json", "r") as f:
+with open("src/models/configs/fullmodels/BCAT.json", "r") as f:
     configs = json.load(f)
-    unet = buildModel(configs)
-    print(unet)
-ts.summary(unet, depth=5, input_data=torch.rand(1,2, 64, 64))
+    model = buildModel(configs)
+    print(model)
+print(model(torch.rand(1, 2, 64, 64)).shape)
