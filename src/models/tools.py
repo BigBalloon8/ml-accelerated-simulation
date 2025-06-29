@@ -51,8 +51,14 @@ def getAct(name):
     elif name.lower() == "gelu":
         from torch.nn.functional import gelu
         return gelu
+    elif name.lower() == "lrelu":
+        from torch.nn.functional import leaky_relu_
+        return leaky_relu_
+    elif name.lower() == "rrelu":
+        from torch.nn.functional import rrelu_
+        return rrelu_
     else:
-        raise ValueError(f"Activation function {name} does not exist")
+        raise ValueError(f"Activation function [{name}] does not exist")
 
 
 def getPool(config):
@@ -92,7 +98,7 @@ def getModel(config, name=None):
     elif name == "RESNEXTBLOCK":
         from .ResNet import ResNeXtBlock
         return ResNeXtBlock(config)
-    elif name == "DENSENETBLOCK":
+    elif name == "DENSENETBLOCK" or name == "DENSEBLOCK":
         from .DenseNet import DenseBlock
         return DenseBlock(config)
     elif name == "UNETENCODERBLOCK":
