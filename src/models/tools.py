@@ -107,6 +107,9 @@ def getModel(config, name=None):
     elif name == "TRANSFORMER":
         from .Transformer import Transformer
         return Transformer(config)
+    elif name == "LEARNABLEPOSTRANSFORMER":
+        from .Transformer import LearnablePosTransformer
+        return LearnablePosTransformer(config)
     elif name == "FASTKANCONV":
         from .FastKANConv import FastKANConvND
         return FastKANConvND(config)

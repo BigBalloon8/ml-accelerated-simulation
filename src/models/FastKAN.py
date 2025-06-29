@@ -58,7 +58,7 @@ class FastKANLayer(nn.Module):
             spline_weight_init_scale: float = 0.1,
     ) -> None:
         super().__init__()
-        self.layernorm = nn.LayerNorm(input_dim)
+        #self.layernorm = nn.LayerNorm(input_dim)
         self.rbf = RadialBasisFunction(grid_min, grid_max, num_grids)
         self.spline_linear = SplineLinear(input_dim * num_grids, output_dim, spline_weight_init_scale)
         self.use_base_update = use_base_update
@@ -68,7 +68,8 @@ class FastKANLayer(nn.Module):
 
     def forward(self, x, time_benchmark=False):
         if not time_benchmark:
-            spline_basis = self.rbf(self.layernorm(x))
+            #spline_basis = self.rbf(self.layernorm(x)) # EDITED
+            spline_basis = self.rbf(x)
         else:
             spline_basis = self.rbf(x)
         ret = self.spline_linear(spline_basis.view(*spline_basis.shape[:-2], -1))
@@ -110,3 +111,4 @@ class FastKAN(nn.Module):
                 x = self.dropout(x)
         x = x.reshape(input_shape)
         return x
+    

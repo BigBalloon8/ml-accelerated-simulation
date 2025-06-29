@@ -22,9 +22,10 @@ class RadialBasisFunction(nn.Module):
 
 
 class FastKANConvNDLayer(nn.Module):
-    def __init__(self, conv_class, norm_class, input_dim, output_dim, kernel_size,
+    def __init__(self, conv_class, # norm_class, # EDITED
+                 input_dim, output_dim, kernel_size,
                  groups=1, padding=0, stride=1, dilation=1,
-                 ndim: int = 2, grid_size=8, base_activation=nn.SiLU, grid_range=[-2, 2], dropout=0.0, **norm_kwargs):
+                 ndim: int = 2, grid_size=8, base_activation=nn.SiLU, grid_range=[-2, 2], dropout=0.0): # EDITED: removed **norm_kwargs
         super(FastKANConvNDLayer, self).__init__()
         self.inputdim = input_dim
         self.outdim = output_dim
@@ -37,7 +38,7 @@ class FastKANConvNDLayer(nn.Module):
         self.grid_size = grid_size
         self.base_activation = base_activation
         self.grid_range = grid_range
-        self.norm_kwargs = norm_kwargs
+        # self.norm_kwargs = norm_kwargs # EDITED
 
         if groups <= 0:
             raise ValueError('groups must be a positive integer')
@@ -47,6 +48,15 @@ class FastKANConvNDLayer(nn.Module):
             raise ValueError('output_dim must be divisible by groups')
 
         self.base_conv = nn.ModuleList([conv_class(input_dim // groups,
+                                                 output_dim // groups,
+                                                 kernel_size,
+                                                 stride,
+                                                 padding,
+                                                 dilation,
+                                                 groups=1,
+                                                 bias=False) for _ in range(groups)])
+
+        self.spline_conv = nn.ModuleList([conv_class(grid_size * input_dim // groups,
                                                    output_dim // groups,
                                                    kernel_size,
                                                    stride,
@@ -55,16 +65,7 @@ class FastKANConvNDLayer(nn.Module):
                                                    groups=1,
                                                    bias=False) for _ in range(groups)])
 
-        self.spline_conv = nn.ModuleList([conv_class(grid_size * input_dim // groups,
-                                                     output_dim // groups,
-                                                     kernel_size,
-                                                     stride,
-                                                     padding,
-                                                     dilation,
-                                                     groups=1,
-                                                     bias=False) for _ in range(groups)])
-
-        self.layer_norm = nn.ModuleList([norm_class(input_dim // groups, **norm_kwargs) for _ in range(groups)])
+        # self.layer_norm = nn.ModuleList([norm_class(input_dim // groups, **norm_kwargs) for _ in range(groups)]) # EDITED
 
         self.rbf = RadialBasisFunction(grid_range[0], grid_range[1], grid_size)
 
@@ -90,7 +91,8 @@ class FastKANConvNDLayer(nn.Module):
         base_output = self.base_conv[group_index](self.base_activation(x))
         if self.dropout is not None:
             x = self.dropout(x)
-        spline_basis = self.rbf(self.layer_norm[group_index](x))
+        # spline_basis = self.rbf(self.layer_norm[group_index](x)) # EDITED
+        spline_basis = self.rbf(x) # EDITED
         spline_basis = spline_basis.moveaxis(-1, 2).flatten(1, 2)
         spline_output = self.spline_conv[group_index](spline_basis)
         x = base_output + spline_output
@@ -115,7 +117,7 @@ class FastKANConvND(nn.Module):
         self.base_activation = getAct(config.get("base_activation", "silu"))
 
         self.conv_class = config.get("conv_class", nn.Conv2d)
-        self.norm_class = config.get("norm_class", nn.BatchNorm2d)
+        # self.norm_class = config.get("norm_class", nn.BatchNorm2d) # EDITED
         
         self.kernel_size = config.get("kernel_size", 3)
         self.groups = config.get("groups", 1)
@@ -128,19 +130,19 @@ class FastKANConvND(nn.Module):
         self.dropout = config.get("dropout", 0.0)
 
         self.layers = nn.ModuleList([FastKANConvNDLayer(conv_class = self.conv_class,
-                                                        norm_class = self.norm_class,
-                                                        input_dim = self.structure[i],
-                                                        output_dim = self.structure[i+1],
-                                                        kernel_size = self.kernel_size,
-                                                        groups = self.groups,
-                                                        padding = self.padding,
-                                                        stride = self.stride,
-                                                        dilation = self.dilation,
-                                                        ndim = self.ndim, 
-                                                        grid_size = self.grid_size,
-                                                        base_activation = self.base_activation, 
-                                                        grid_range = self.grid_range,
-                                                        dropout = self.dropout) for i in range(len(self.structure)-1)])
+                                                      # norm_class = self.norm_class, # EDITED
+                                                      input_dim = self.structure[i],
+                                                      output_dim = self.structure[i+1],
+                                                      kernel_size = self.kernel_size,
+                                                      groups = self.groups,
+                                                      padding = self.padding,
+                                                      stride = self.stride,
+                                                      dilation = self.dilation,
+                                                      ndim = self.ndim, 
+                                                      grid_size = self.grid_size,
+                                                      base_activation = self.base_activation, 
+                                                      grid_range = self.grid_range,
+                                                      dropout = self.dropout) for i in range(len(self.structure)-1)])
         
     def forward(self, x):
         for i, layer in enumerate(self.layers):

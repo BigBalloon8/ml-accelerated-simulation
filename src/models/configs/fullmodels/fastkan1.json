@@ -3,7 +3,7 @@
     "name": "FastKAN",
     "structures": {
                    "in_channels": 8192,
-                   "hidden_channels": [4096, 2048, 1024, 2048, 4096],
+                   "hidden_channels": [4096, 2048, 2048, 2048, 2048, 2048, 2048, 4096],
                    "out_channels": 8192
                   },
     "base_activation": "silu",
