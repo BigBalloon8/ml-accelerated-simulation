@@ -113,6 +113,9 @@ def getModel(config, name=None):
             return SmartCNNBN(config)
         else:
             return SmartCNN(config)
+    elif name == "BCAT":
+        from .BCAT import BCAT
+        return BCAT(config, 64, 2)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
