@@ -1,6 +1,6 @@
 [
     {
-    "name": "Transformer",
+    "name": "LearnablePosTransformer",
 
     "d_model": 1024,
     "num_heads": 16,

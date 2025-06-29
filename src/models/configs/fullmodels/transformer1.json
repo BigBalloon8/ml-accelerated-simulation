@@ -8,7 +8,7 @@
     "d_ff": 2048,
 
     "img_size": 256,
-    "patch_size": 16,
+    "patch_size": 4,
     "in_channels": 2,
 
     "dropout": 0.1

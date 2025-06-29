@@ -136,38 +136,32 @@ class PositionalEncoding2D(nn.Module):
     Generates 2D sinusoidal positional encodings for image patches.
 
     This module creates separate positional encodings for the height and width
-    dimensions and concatenates them to provide 2D spatial information.
+    dimensions and then adds them together to provide 2D spatial information.
+    The final output shape is (1, height * width, d_model).
 
     Args:
-        d_model (int): The dimension of the model. Must be divisible by 4.
+        d_model (int): The dimension of the model. Must be an even number.
         height (int): The number of patches along the height of the image.
         width (int): The number of patches along the width of the image.
     """
     def __init__(self, d_model, height, width):
         super(PositionalEncoding2D, self).__init__()
-        assert d_model % 2 == 0, "d_model must be an even number for 2D encoding."
+        assert d_model % 2 == 0, "d_model must be an even number"
 
-        pe = torch.zeros(height * width, d_model)
+        pe = torch.zeros(height, width, d_model)
+
+        position_h = torch.arange(0, height, dtype=torch.float).unsqueeze(1)
+        position_w = torch.arange(0, width, dtype=torch.float).unsqueeze(1)
         
-        y_position = torch.arange(0, height, dtype=torch.float).unsqueeze(1)
-        x_position = torch.arange(0, width, dtype=torch.float).unsqueeze(1)
-
-        d_model_half = d_model // 2
-        div_term = torch.exp(torch.arange(0, d_model_half, 2).float() * -(math.log(10000.0) / d_model_half))
-
-        pe_y = torch.zeros(height, d_model_half)
-        pe_y[:, 0::2] = torch.sin(y_position * div_term)
-        pe_y[:, 1::2] = torch.cos(y_position * div_term)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * -(math.log(10000.0) / d_model))
         
-        pe_x = torch.zeros(width, d_model_half)
-        pe_x[:, 0::2] = torch.sin(x_position * div_term)
-        pe_x[:, 1::2] = torch.cos(x_position * div_term)
+        pe[:, :, 0::2] = torch.sin(position_h * div_term).unsqueeze(1)
+        pe[:, :, 1::2] = torch.cos(position_h * div_term).unsqueeze(1)
 
-        pe_y_expanded = pe_y.unsqueeze(1).expand(-1, width, -1)
-        pe_x_expanded = pe_x.unsqueeze(0).expand(height, -1, -1)
-        pe = torch.cat([pe_y_expanded, pe_x_expanded], dim=2)
+        pe[:, :, 0::2] += torch.sin(position_w * div_term).unsqueeze(0)
+        pe[:, :, 1::2] += torch.cos(position_w * div_term).unsqueeze(0)
         
-        self.register_buffer('pe', pe.view(-1, d_model).unsqueeze(0))
+        self.register_buffer('pe', pe.view(1, -1, d_model))
 
     def forward(self, x):
 
