@@ -15,7 +15,7 @@ from models import buildModel
 from log import Logger
 
 def hash_dict(x:dict):
-    return str(hash(json.dumps(x, sort_keys=True)))
+    return str(hash("".join(sorted(json.dumps(x, sort_keys=True)))))
 
 def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
@@ -27,23 +27,28 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[n
     if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
         print(f"Model Found in {checkpoint_path}: {name}_{hash_dict(config)}.safetensors")
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
+        opt_path = os.path.join(checkpoint_path, f"{name}_ADAM_{hash_dict(config)}.safetensors")
         model_weights = st.load_file(model_path)
         with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.json"), "r") as f:
             metadata = json.load(f)
         model_base.load_state_dict(model_weights)
+        opt_state = st.load_file(opt_path)
     else:
         metadata = {"last_epoch":-1}
-    return model_base, metadata
+        opt_state = None
+    return model_base, metadata, opt_state
     
         
-def save_model(model:nn.Module, model_type, checkpoint_path, model_config, metadata=None):
+def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoint_path, model_config, metadata=None):
     with open(model_config, "r") as f:
         config = json.load(f)
     metadata["model_config"] = config
     model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.safetensors")
+    opt_path = os.path.join(checkpoint_path, f"{model_type}_ADAM_{hash_dict(config)}.safetensors")
     with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.json"), "w") as f:
         json.dump(metadata, f)
     st.save_model(model, model_path)
+    st.save_file(opt.state_dict(), opt_path)
     
     
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run):
@@ -62,13 +67,15 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
     train_dataloader, validation_dataloader = get_kolomogrov_flow_data_loader(data_path, batchsize=local_batch_size)
 
-    model, metadata = get_model(model_type, model_config, checkpoint_path, logger, new_run)
+    model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
 
     criterion = nn.MSELoss()
     val_criterion = nn.MSELoss(reduction="sum")
 
     opt = torch.optim.Adam(model.parameters())
+    if opt_state is not None:
+        opt.load_state_dict(opt_state)
     
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, patience=5)
 
@@ -106,7 +113,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
-        save_model(model, model_type, checkpoint_path, model_config, {"last_epoch:":e})    
+        save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch:":e})    
 
         
 
