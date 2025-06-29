@@ -163,9 +163,8 @@ class PositionalEncoding2D(nn.Module):
         pe_x[:, 0::2] = torch.sin(x_position * div_term)
         pe_x[:, 1::2] = torch.cos(x_position * div_term)
 
-        pe_y_expanded = pe_y.unsqueeze(1).repeat(1, width, 1)
-        pe_x_expanded = pe_x.unsqueeze(0).repeat(height, 1, 1)
-
+        pe_y_expanded = pe_y.unsqueeze(1).expand(-1, width, -1)
+        pe_x_expanded = pe_x.unsqueeze(0).expand(height, -1, -1)
         pe = torch.cat([pe_y_expanded, pe_x_expanded], dim=2)
         
         self.register_buffer('pe', pe.view(-1, d_model).unsqueeze(0))
