@@ -1,0 +1,16 @@
+[
+    {
+    "name": "Transformer",
+
+    "d_model": 1024,
+    "num_heads": 16,
+    "num_layers": 12,
+    "d_ff": 4096,
+
+    "img_size": 256,
+    "patch_size": 16,
+    "in_channels": 2,
+
+    "dropout": 0.1
+}
+]
