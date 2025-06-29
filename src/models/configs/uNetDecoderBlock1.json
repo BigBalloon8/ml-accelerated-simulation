@@ -16,6 +16,7 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 }
 ]

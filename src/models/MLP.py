@@ -41,4 +41,4 @@ if __name__ == "__main__":
     with open("src/models/configs/mlp1.json", "r") as f:
         config = json.load(f)
         mlp = MLP(config[0])
-        print(mlp.get_parameter)
+        print(mlp)

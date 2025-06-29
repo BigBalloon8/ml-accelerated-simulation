@@ -16,7 +16,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 },
 {
     "name": "UNetEncoderBlock",
@@ -35,7 +36,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 },
 {
     "name": "UNetEncoderBlock",
@@ -54,7 +56,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 },
 {
     "name": "UNetEncoderBlock",
@@ -73,7 +76,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 },
 {
     "name": "CNN",
@@ -87,7 +91,8 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "relu",
+    "bn": true
 },
 {
     "name": "UNetDecoderBlock",
@@ -106,7 +111,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 },
 {
     "name": "UNetDecoderBlock",
@@ -125,7 +131,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 },
 {
     "name": "UNetDecoderBlock",
@@ -144,7 +151,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 },
 {
     "name": "UNetDecoderBlock",
@@ -163,7 +171,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": true
 },
 {
     "name": "CNN",
@@ -176,6 +185,7 @@
     "paddings": 0,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "relu",
+    "bn": false
 }
 ]

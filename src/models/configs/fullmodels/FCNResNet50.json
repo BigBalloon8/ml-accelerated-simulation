@@ -3,15 +3,15 @@
     "name": "CNN",
     "structures": {
         "in_channels": 2,
-        "hidden_channels": [4, 10, 10, 4],
         "out_channels": 2
     },
-    "kernel_sizes": 3,
+    "kernel_sizes": 7,
     "strides": 1,
-    "paddings": 1,
+    "paddings": 3,
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
     "bn": true
 }
+
 ]

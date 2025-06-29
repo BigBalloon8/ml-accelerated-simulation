@@ -11,8 +11,9 @@
     "paddings": [0, 1, 0],
     "group": 2,
     "dropouts": 0,
-    "activation_func": "relu",
-    "1x1_conv": true
+    "activation_func": "lrelu",
+    "1x1_conv": true,
+    "bn": true
 },{
     "name": "ResNeXtBlock",
     "structures": {
@@ -25,8 +26,9 @@
     "paddings": [0, 1, 0],
     "group": 2,
     "dropouts": 0,
-    "activation_func": "relu",
-    "1x1_conv": false
+    "activation_func": "lrelu",
+    "1x1_conv": false,
+    "bn": true
 },{
     "name": "ResNeXtBlock",
     "structures": {
@@ -39,8 +41,9 @@
     "paddings": [0, 1, 0],
     "group": 2,
     "dropouts": 0,
-    "activation_func": "relu",
-    "1x1_conv": false
+    "activation_func": "lrelu",
+    "1x1_conv": false,
+    "bn": true
 },{
     "name": "ResNeXtBlock",
     "structures": {
@@ -53,8 +56,9 @@
     "paddings": [0, 1, 0],
     "group": 2,
     "dropouts": 0,
-    "activation_func": "relu",
-    "1x1_conv": false
+    "activation_func": "lrelu",
+    "1x1_conv": false,
+    "bn": true
 },{
     "name": "ResNeXtBlock",
     "structures": {
@@ -67,8 +71,9 @@
     "paddings": [0, 1, 0],
     "group": 2,
     "dropouts": 0,
-    "activation_func": "relu",
-    "1x1_conv": false
+    "activation_func": "lrelu",
+    "1x1_conv": false,
+    "bn": true
 },{
     "name": "ResNeXtBlock",
     "structures": {
@@ -81,7 +86,8 @@
     "paddings": [0, 1, 0],
     "group": 2,
     "dropouts": 0,
-    "activation_func": "relu",
-    "1x1_conv": true
+    "activation_func": "lrelu",
+    "1x1_conv": true,
+    "bn": true
 }
 ]
