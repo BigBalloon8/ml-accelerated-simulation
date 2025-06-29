@@ -1,0 +1,32 @@
+[
+    {
+        "name": "BCAT",
+        "n_layer": 12,
+        "dim_emb": 1024,
+        "dim_ffn": 2752,
+        "dropout": 0,
+        "attn_dropout": 0,
+        "n_head": 8,
+        "norm_first": true,
+        "positional_embedding": null,
+        "qk_norm": 1,
+        "norm": "rms",
+        "activation": "swiglu",
+        "rotary": 0,
+        "flex_attn": 0,
+        "kv_cache": 1,
+        "patch_num": 8,
+        "patch_num_output": 8,
+        "embedder": {
+            "type": "conv",
+            "dim": 1024,
+            "patch_num": 8,
+            "patch_num_output": 8,
+            "time_embed": "learnable",
+            "max_time_len": 1,
+            "conv_dim": 32,
+            "early_conv": 0,
+            "deep": 0
+        }
+}
+]
