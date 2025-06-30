@@ -113,9 +113,15 @@ def getModel(config, name=None):
     elif name == "TRANSFORMER":
         from .Transformer import Transformer
         return Transformer(config)
-    elif name == "KAN":
-        from .KAN import KAN
-        return KAN(config)
+    elif name == "LEARNABLEPOSTRANSFORMER":
+        from .Transformer import LearnablePosTransformer
+        return LearnablePosTransformer(config)
+    elif name == "FASTKANCONV":
+        from .FastKANConv import FastKANConvND
+        return FastKANConvND(config)
+    elif name == "FASTKAN":
+        from .FastKAN import FastKAN
+        return FastKAN(config)
     elif name == "SMARTCONV":
         from .SmartCNN import SmartCNN, SmartCNNBN
         if config["bn"]:
@@ -127,15 +133,7 @@ def getModel(config, name=None):
         return BCAT(config, 64, 2)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
-    elif name == "LEARNABLEPOSTRANSFORMER":
-        from .Transformer import LearnablePosTransformer
-        return LearnablePosTransformer(config)
-    elif name == "FASTKANCONV":
-        from .FastKANConv import FastKANConvND
-        return FastKANConvND(config)
-    elif name == "FASTKAN":
-        from .FastKAN import FastKAN
-        return FastKAN(config)
+
     
 
 def getLayers(model):
