@@ -27,12 +27,12 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[n
     if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
         print(f"Model Found in {checkpoint_path}: {name}_{hash_dict(config)}.safetensors")
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
-        opt_path = os.path.join(checkpoint_path, f"{name}_ADAM_{hash_dict(config)}.safetensors")
+        opt_path = os.path.join(checkpoint_path, f"{name}_ADAM_{hash_dict(config)}.pt")
         model_weights = st.load_file(model_path)
         with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.json"), "r") as f:
             metadata = json.load(f)
         model_base.load_state_dict(model_weights)
-        opt_state = st.load_file(opt_path)
+        opt_state = torch.load(opt_path)
     else:
         metadata = {"last_epoch":-1}
         opt_state = None
@@ -44,11 +44,12 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
         config = json.load(f)
     metadata["model_config"] = config
     model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.safetensors")
-    opt_path = os.path.join(checkpoint_path, f"{model_type}_ADAM_{hash_dict(config)}.safetensors")
+    opt_path = os.path.join(checkpoint_path, f"{model_type}_ADAM_{hash_dict(config)}.pt")
     with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.json"), "w") as f:
         json.dump(metadata, f)
     st.save_model(model, model_path)
-    st.save_file(opt.state_dict(), opt_path)
+    #print(opt.state_dict())
+    torch.save(opt.state_dict(), opt_path)
     
     
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run):
