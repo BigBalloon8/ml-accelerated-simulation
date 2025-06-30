@@ -28,8 +28,8 @@ class DenseBlock(nn.Module):
         structure = structureLoader(config["structures"])
         kernel_sizes, strides, paddings, group = paramToList(config["kernel_sizes"], len(structure)-1), paramToList(config["strides"], len(structure)-1), paramToList(config["paddings"], len(structure)-1), paramToList(config["group"], len(structure)-1)
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
-
-        if config["bn"]:
+        self.bn = config["bn"]
+        if self.bn:
             self.layers = nn.ModuleList([nn.ModuleList([nn.BatchNorm2d(sum(structure[:i+1])), nn.Conv2d(sum(structure[:i+1]), structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i])]) for i in range(len(structure)-1)])
             self.conv1 = nn.ModuleList([nn.BatchNorm2d(sum(structure)), nn.Conv2d(sum(structure), structure[-1], kernel_size=1)])
         else:
@@ -38,10 +38,16 @@ class DenseBlock(nn.Module):
 
 
     def forward(self, x):
-        for i, layer in enumerate(self.layers):
-            y = F.dropout(layer[1](self.act(layer[0](x))), p=self.dropouts[i], training=self.training)
-            x = cat((x,y), dim=1) # concaternate along channels
-        return self.conv1[1](self.act(self.conv1[0](x))) # reduce channel size down to the desired output size
+        if self.bn:
+            for i, layer in enumerate(self.layers):
+                y = F.dropout(layer[1](self.act(layer[0](x))), p=self.dropouts[i], training=self.training)
+                x = cat((x,y), dim=1) # concaternate along channels
+            return self.conv1[1](self.act(self.conv1[0](x))) # reduce channel size down to the desired output size
+        else:
+            for i, layer in enumerate(self.layers):
+                y = F.dropout(layer(self.act(x)), p=self.dropouts[i], training=self.training)
+                x = cat((x,y), dim=1) # concaternate along channels
+            return self.conv1(self.act(x)) # reduce channel size down to the desired output size
 
 if __name__ == "__main__":
     import json
