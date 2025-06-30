@@ -338,7 +338,7 @@ if __name__ == "__main__":
         transformer = Transformer(config)
         print(transformer)
 
-#-------------------
+'''#-------------------
 # Example transformer usage
 
 # parameters
@@ -376,4 +376,4 @@ val_target_data = torch.rand(batch_size, in_channels, img_size, img_size)
 with torch.no_grad():
     val_output = transformer(val_src_data)
     val_loss = criterion(val_output, val_target_data)
-    print(f"Validation Loss: {val_loss.item()}")
+    print(f"Validation Loss: {val_loss.item()}")'''
