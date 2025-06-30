@@ -74,7 +74,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     criterion = nn.MSELoss()
     val_criterion = nn.MSELoss(reduction="sum")
 
-    opt = torch.optim.Adam(model.parameters())
+    opt = torch.optim.Adam(model.parameters(), weight_decay=1e-4, amsgrad=True)
     if opt_state is not None:
         opt.load_state_dict(opt_state)
     
