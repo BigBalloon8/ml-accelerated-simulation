@@ -192,11 +192,9 @@ class EncoderLayer(nn.Module):
         
     def forward(self, x, mask):
         attn_output = self.self_attn(x, x, x, mask)
-        # x = self.norm1(x + self.dropout(attn_output)) # EDITED
-        x = x + self.dropout(attn_output)
+        x = self.norm1(x + self.dropout(attn_output))
         ff_output = self.feed_forward(x)
-        # x = self.norm2(x + self.dropout(ff_output)) # EDITED
-        x = x + self.dropout(ff_output)
+        x = self.norm2(x + self.dropout(ff_output))
         return x
 
 
@@ -335,12 +333,12 @@ class LearnablePosTransformer(nn.Module):
     
 if __name__ == "__main__":
     import json
-    with open("src/models/configs/transformer1.json", "r") as f:
+    with open("src/models/configs/fullmodels/transformer2big.json", "r") as f:
         config = json.load(f)[0]
         transformer = Transformer(config)
         print(transformer)
 
-'''#-------------------
+#-------------------
 # Example transformer usage
 
 # parameters
@@ -378,4 +376,4 @@ val_target_data = torch.rand(batch_size, in_channels, img_size, img_size)
 with torch.no_grad():
     val_output = transformer(val_src_data)
     val_loss = criterion(val_output, val_target_data)
-    print(f"Validation Loss: {val_loss.item()}")'''
+    print(f"Validation Loss: {val_loss.item()}")
