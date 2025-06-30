@@ -3,7 +3,7 @@
     "name": "CNN",
     "structures": {
         "in_channels": 2,
-        "out_channels": 2
+        "out_channels": 64
     },
     "kernel_sizes": 7,
     "strides": 1,
@@ -11,7 +11,262 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "bn": true
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 64,
+        "hidden_channels": [64, 64],
+        "out_channels": 256
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 64,
+        "hidden_channels": [64, 64],
+        "out_channels": 256
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 64,
+        "hidden_channels": [64, 64],
+        "out_channels": 256
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 128,
+        "hidden_channels": [128, 128],
+        "out_channels": 512
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 128,
+        "hidden_channels": [128, 128],
+        "out_channels": 512
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 128,
+        "hidden_channels": [128, 128],
+        "out_channels": 512
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 128,
+        "hidden_channels": [128, 128],
+        "out_channels": 512
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 256,
+        "hidden_channels": [256, 256],
+        "out_channels": 1024
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 256,
+        "hidden_channels": [256, 256],
+        "out_channels": 1024
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 256,
+        "hidden_channels": [256, 256],
+        "out_channels": 1024
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 256,
+        "hidden_channels": [256, 256],
+        "out_channels": 1024
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 256,
+        "hidden_channels": [256, 256],
+        "out_channels": 1024
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 256,
+        "hidden_channels": [256, 256],
+        "out_channels": 1024
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 512,
+        "hidden_channels": [512, 512],
+        "out_channels": 2048
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 512,
+        "hidden_channels": [512, 512],
+        "out_channels": 2048
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
+},
+{
+    "name": "ResNetBottleneckBlock",
+    "structures": {
+        "in_channels": 512,
+        "hidden_channels": [512, 512],
+        "out_channels": 2048
+    },
+    "kernel_sizes": [1, 3, 1],
+    "strides": 1,
+    "paddings": [0, 1, 0],
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "1x1_conv": true,
+    "bn": false
 }
-
 ]
