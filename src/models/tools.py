@@ -51,11 +51,17 @@ def getAct(name):
     elif name.lower() == "gelu":
         from torch.nn.functional import gelu
         return gelu
+    elif name.lower() == "lrelu":
+        from torch.nn.functional import leaky_relu_
+        return leaky_relu_
+    elif name.lower() == "rrelu":
+        from torch.nn.functional import rrelu_
+        return rrelu_
     elif name.lower() == "silu":
         from torch.nn.functional import silu
         return silu
     else:
-        raise ValueError(f"Activation function {name} does not exist")
+        raise ValueError(f"Activation function [{name}] does not exist")
 
 
 def getPool(config):
@@ -95,7 +101,7 @@ def getModel(config, name=None):
     elif name == "RESNEXTBLOCK":
         from .ResNet import ResNeXtBlock
         return ResNeXtBlock(config)
-    elif name == "DENSEBLOCK":
+    elif name == "DENSENETBLOCK" or name == "DENSEBLOCK":
         from .DenseNet import DenseBlock
         return DenseBlock(config)
     elif name == "UNETENCODERBLOCK":
@@ -107,6 +113,20 @@ def getModel(config, name=None):
     elif name == "TRANSFORMER":
         from .Transformer import Transformer
         return Transformer(config)
+    elif name == "KAN":
+        from .KAN import KAN
+        return KAN(config)
+    elif name == "SMARTCONV":
+        from .SmartCNN import SmartCNN, SmartCNNBN
+        if config["bn"]:
+            return SmartCNNBN(config)
+        else:
+            return SmartCNN(config)
+    elif name == "BCAT":
+        from .BCAT import BCAT
+        return BCAT(config, 64, 2)
+    else:
+        raise ValueError(f"Model Name [{name}] not defined")
     elif name == "LEARNABLEPOSTRANSFORMER":
         from .Transformer import LearnablePosTransformer
         return LearnablePosTransformer(config)
