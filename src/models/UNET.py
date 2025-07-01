@@ -22,7 +22,7 @@ class UNetEncoderBlock(nn.Module):
                 method (str): pooling method,\n
                 kernel_sizes (int): pooling kernel size,\n
                 strides (int): pooling strides)\n
-            bn (bool): Whether to apply batch normalisation after convolution\n 
+            bn (bool, optional): Whether to apply batch normalisation after convolution\n 
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
     """
@@ -31,9 +31,9 @@ class UNetEncoderBlock(nn.Module):
         self.act = getAct(config["activation_func"])
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
-        self.pool = getPool(config["pooling"])
 
-        self.layers = nn.ModuleList(*getLayers(getModel(config, "CNN")))
+        self.layers = getLayers(getModel(config, "CNN"))[0]
+        self.pool = getPool(config["pooling"])
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):
@@ -61,7 +61,7 @@ class UNetDecoderBlock(nn.Module):
                 method (str): pooling method,\n
                 kernel_sizes (int): pooling kernel size,\n
                 strides (int): pooling strides)\n
-            bn (bool): Whether to apply batch normalisation after convolution\n
+            bn (bool, optional): Whether to apply batch normalisation after convolution\n
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
     """
@@ -72,7 +72,7 @@ class UNetDecoderBlock(nn.Module):
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         pool_data = list(config["pooling"].values())[1:]
 
-        self.layers = nn.ModuleList(*getLayers(getModel(config, "CNN")))
+        self.layers = getLayers(getModel(config, "CNN"))[0]
         self.convT = nn.ConvTranspose2d(structure[0], structure[0]//2, kernel_size=pool_data[0], stride=pool_data[1])
 
     def forward(self, x, x1):

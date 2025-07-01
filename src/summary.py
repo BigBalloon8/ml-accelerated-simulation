@@ -1,12 +1,13 @@
 import torchsummary as ts
 from models import buildModel
+from models.tools import*
 import json
 import torch
 
 
-with open("src/models/configs/fullmodels/uNet1.json", "r") as f:
+with open("src/models/configs/uNetEncoderBlock1.json", "r") as f:
     configs = json.load(f)
     model = buildModel(configs)
-    print(model)
+    #print(model)
 #print(model(torch.rand(1, 2, 64, 64)).shape)
 ts.summary(model, torch.rand(1, 2, 64, 64), depth=5)

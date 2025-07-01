@@ -17,8 +17,8 @@ class ResNetBlock(nn.Module):
             group* (int or list): number of groups (must divide both in_channels and out_channels) (Set to 1 for default)\n
             dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n
             activation_func (str): Name of desired activation function\n 
-            1x1_conv: (bool): Whether to apply 1x1 convolution to input before combining with output\n
-            bn (bool): Whether to apply batch normalisation after convolution\n
+            1x1_conv: (bool, optional): Whether to apply 1x1 convolution to input before combining with output\n
+            bn (bool, optional): Whether to apply batch normalisation after convolution\n
     (^):\n Use resNetBasicBlock.json for basic block.\n
     \t Use resNetBottleneckBlock.json for Bottleneck Block.\n
     (*):\n If a float or int, applies the same value to all layers.\n
@@ -30,14 +30,14 @@ class ResNetBlock(nn.Module):
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
-        self.layers = nn.ModuleList(*getLayers(getModel(config, "CNN")))
+        self.layers = getLayers(getModel(config, "CNN"))[0]
         try:
             if config["1x1_conv"]:
                 self.conv1 = nn.Conv2d(structure[0], structure[-1], kernel_size=1)
             else: 
-                self.conv1 = None
+                self.conv1 = nn.Identity()
         except(KeyError):
-            self.conv1 = None
+            self.conv1 = nn.Identity()
 
     def forward(self, x):
         y = x
@@ -45,8 +45,7 @@ class ResNetBlock(nn.Module):
             if i < len(self.layers) - 1:
                 y = F.dropout(self.act(layer(y)), p=self.dropouts[i], training=self.training)
         y = layer(y)
-        if self.conv1 is not None:
-                x = self.conv1(x)
+        x = self.conv1(x)
         return self.act(x+y)
 
 
@@ -67,7 +66,7 @@ class ResNeXtBlock(nn.Module):
             dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n
             activation_func (str): Name of desired activation function\n 
             1x1_conv: (bool): Whether to apply 1x1 convolution to input before combining with output\n
-            bn (bool): Whether to apply batch normalisation after convolution\n
+            bn (bool, optional): Whether to apply batch normalisation after convolution\n
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
     """
@@ -77,13 +76,14 @@ class ResNeXtBlock(nn.Module):
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
-        self.layers = nn.ModuleList(*getLayers(getModel(config, "CNN")))
-        if config["1x1_conv"] and config["bn"]:
-            self.conv1 = nn.Sequential(nn.Conv2d(structure[0], structure[-1], kernel_size=1), nn.BatchNorm2d(structure[-1]))
-        elif config["1x1_conv"] == False: 
-            self.conv1 = None
-        else:
-            self.conv1 = nn.Conv2d(structure[0], structure[-1], kernel_size=1)
+        self.layers = getLayers(getModel(config, "CNN"))[0]
+        try:
+            if config["1x1_conv"]:
+                self.conv1 = nn.Sequential(nn.Conv2d(structure[0], structure[-1], kernel_size=1), nn.BatchNorm2d(structure[-1])) if config["bn"] else nn.Conv2d(structure[0], structure[-1], kernel_size=1)
+            else:
+                self.conv1 = nn.Identity()
+        except(KeyError):
+            self.conv1 = nn.Conv2d(structure[0], structure[-1], kernel_size=1) if "1x1_conv" in config else nn.Identity()
 
 
     def forward(self, x):
@@ -92,8 +92,7 @@ class ResNeXtBlock(nn.Module):
             if i < len(self.layers) - 1:
                 y = F.dropout(self.act(layer(y)), p=self.dropouts[i], training=self.training)
         y = layer(y)
-        if self.conv1 is not None:
-                x = self.conv1(x)
+        x = self.conv1(x)
         return self.act(x+y)
 
 
@@ -105,4 +104,3 @@ if __name__ == "__main__":
         config = json.load(f)
         resnet = ResNeXtBlock(config[0])
         print(resnet)
-
