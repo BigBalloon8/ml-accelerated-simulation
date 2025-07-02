@@ -115,13 +115,13 @@ def getModel(config, name=None):
         return KAN(config)
     elif name == "SMARTCONV":
         from .SmartCNN import SmartCNN, SmartCNNBN
-        if config["bn"]:
-            return SmartCNNBN(config)
-        else:
-            return SmartCNN(config)
+        return SmartCNN(config)
     elif name == "BCAT":
         from .BCAT import BCAT
         return BCAT(config, 64, 2)
+    elif name == "CHANNELAWARE":
+        from .ChannelAwareCNN import ChannelAwareCNN
+        return ChannelAwareCNN(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
