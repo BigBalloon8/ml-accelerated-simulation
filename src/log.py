@@ -25,6 +25,7 @@ class Logger:
             open(filename, "w").close()
         
         file_handler = logging.FileHandler(filename)
+        file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
 
         # Instead of print(msg) adding this handler automatically prints the message with the correct format

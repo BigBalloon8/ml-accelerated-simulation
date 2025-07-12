@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from .tools import getAct
 
 class ChannelAwareCNN(nn.Module):
     def __init__(self, config):
@@ -23,7 +24,7 @@ class ChannelAwareCNN(nn.Module):
                 nn.Conv2d(full_channels[i], full_channels[i+1], 3 , 1, 1)
             )
 
-        self.act = lambda x : x
+        self.act = getAct(config["activation"])
     
     def forward(self, x):
         for conv, mixin in zip(self.vector_component_convs, self.mixins):
