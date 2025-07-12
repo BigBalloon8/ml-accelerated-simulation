@@ -1,3 +1,5 @@
+import torch
+
 def paramToList(param, dimension):
         '''
         Check and convert hyperparameters into lists
@@ -43,14 +45,23 @@ def getAct(name):
         The corresponding activation function
     """
     if name.lower() == "relu":
-        from torch.nn.functional import relu_
-        return relu_
+        return torch.relu_
     elif name.lower() == "selu":
-        from torch.nn.functional import selu_
-        return selu_
+        return torch.selu_
     elif name.lower() == "gelu":
         from torch.nn.functional import gelu
         return gelu
+    elif name.lower() == "identity":
+        return lambda x: x
+    elif name.lower() == "tanh":
+        return torch.tanh
+    elif name.lower() == "sigmoid":
+        return torch.sigmoid
+    elif name.lower() == "shifted_sigmoid":
+        @torch.compile
+        def shifted_sigmoid(x:torch.Tensor):
+            return 2*torch.sigmoid_(x) - 1
+        return shifted_sigmoid
     else:
         raise ValueError(f"Activation function {name} does not exist")
 
@@ -116,6 +127,9 @@ def getModel(config, name=None):
     elif name == "CHANNELAWARE":
         from .ChannelAwareCNN import ChannelAwareCNN
         return ChannelAwareCNN(config)
+    elif name == "3DCNN":
+        from .CNN3D import CNN3D
+        return CNN3D(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
