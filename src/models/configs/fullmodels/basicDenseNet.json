@@ -1,6 +1,6 @@
 [
 {
-    "name": "DensNetBlock",
+    "name": "DenseNetBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [64, 64],
@@ -13,7 +13,7 @@
     "dropouts": 0,
     "activation_func": "relu"
 },{
-    "name": "DensNetBlock",
+    "name": "DenseNetBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [64, 64],
@@ -26,7 +26,7 @@
     "dropouts": 0,
     "activation_func": "relu"
 },{
-    "name": "DensNetBlock",
+    "name": "DenseNetBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [64, 64],
@@ -39,7 +39,7 @@
     "dropouts": 0,
     "activation_func": "relu"
 },{
-    "name": "DensNetBlock",
+    "name": "DenseNetBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [64, 64],
@@ -52,7 +52,7 @@
     "dropouts": 0,
     "activation_func": "relu"
 },{
-    "name": "DensNetBlock",
+    "name": "DenseNetBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [64, 64],
@@ -65,7 +65,7 @@
     "dropouts": 0,
     "activation_func": "relu"
 },{
-    "name": "DensNetBlock",
+    "name": "DenseNetBlock",
     "structures": {
         "in_channels": 2,
         "hidden_channels": [64, 64],

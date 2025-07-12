@@ -27,7 +27,11 @@ class CNN(nn.Module):
         structure = structureLoader(config["structures"])
         kernel_sizes, strides, paddings, group = paramToList(config["kernel_sizes"], len(structure)-1), paramToList(config["strides"], len(structure)-1), paramToList(config["paddings"], len(structure)-1), paramToList(config["group"], len(structure)-1)
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
-        self.layers = nn.ModuleList([nn.Conv2d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
+        if config["bn"]:
+            self.layers = nn.ModuleList([nn.Sequential(nn.Conv2d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]), nn.BatchNorm2d(structure[i+1])) for i in range(len(structure)-1)])
+        else:
+            self.layers = nn.ModuleList([nn.Conv2d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
+
             
     def forward(self, x):
         for i, layer in enumerate(self.layers):
