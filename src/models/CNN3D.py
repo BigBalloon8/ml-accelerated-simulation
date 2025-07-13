@@ -30,10 +30,11 @@ class CNN3D(nn.Module):
         self.layers = nn.ModuleList([nn.Conv3d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
             
     def forward(self, x):
+        x = x.unsqueeze(1)
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
                 x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
-        return layer(x)
+        return layer(x).squeeze(1)
 
 
 

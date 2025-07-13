@@ -30,6 +30,6 @@ class ChannelAwareCNN(nn.Module):
         for conv, mixin in zip(self.vector_component_convs, self.mixins):
             x = mixin(self.act(conv(x)))
         
-        for conv in self.full_channel_convs:
+        for conv in self.full_channel_convs[:-1]:
             x = self.act(conv(x))
-        return x
+        return self.full_channel_convs[-1](x)

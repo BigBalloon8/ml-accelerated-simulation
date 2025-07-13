@@ -20,6 +20,6 @@ class SmartCNN(nn.Module):
     def forward(self, x):
         for l in self.vector_component_convs:
             x = torch.relu(l(x))
-        for l in self.full_channel_convs:
+        for l in self.full_channel_convs[:-1]:
             x = torch.relu(l(x))
-        return x
+        return self.full_channel_convs[-1](x)
