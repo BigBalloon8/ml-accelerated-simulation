@@ -136,6 +136,9 @@ def getModel(config, name=None):
     elif name == "3DCNN":
         from .CNN3D import CNN3D
         return CNN3D(config)
+    elif name == "3DCNNSMART":
+        from .CNN3D import CNN3D
+        return CNN3D(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
