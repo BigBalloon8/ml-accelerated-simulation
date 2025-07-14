@@ -125,7 +125,7 @@ def getModel(config, name=None):
         from .KAN import KAN
         return KAN(config)
     elif name == "SMARTCONV":
-        from .SmartCNN import SmartCNN, SmartCNNBN
+        from .SmartCNN import SmartCNN
         return SmartCNN(config)
     elif name == "BCAT":
         from .BCAT import BCAT
