@@ -125,7 +125,7 @@ def getModel(config, name=None):
         from .KAN import KAN
         return KAN(config)
     elif name == "SMARTCONV":
-        from .SmartCNN import SmartCNN, SmartCNNBN
+        from .SmartCNN import SmartCNN
         return SmartCNN(config)
     elif name == "BCAT":
         from .BCAT import BCAT
@@ -134,6 +134,9 @@ def getModel(config, name=None):
         from .ChannelAwareCNN import ChannelAwareCNN
         return ChannelAwareCNN(config)
     elif name == "3DCNN":
+        from .CNN3D import CNN3D
+        return CNN3D(config)
+    elif name == "3DCNNSMART":
         from .CNN3D import CNN3D
         return CNN3D(config)
     else:
