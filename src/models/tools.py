@@ -181,4 +181,4 @@ def getUpsample(in_channels, out_channels, config):
         from torch.nn import Sequential, Conv2d, Upsample
         return Sequential(Upsample(scale_factor=config["strides"], mode="bicubic", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
     else:
-        raise ValueError(f"Model Name [{config["method"].lower()}] not defined")
+        raise ValueError(f"Model Name not defined")
