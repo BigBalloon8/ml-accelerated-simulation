@@ -12,8 +12,8 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
-        "method": "max",
+    "upsample": {
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
     },

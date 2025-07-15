@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import cat
-from .tools import paramToList, structureLoader, getAct, getModel, getLayers, getPool
+from .tools import paramToList, structureLoader, getAct, getModel, getLayers, getPool, getUpsample
 
 class UNetEncoderBlock(nn.Module):
     """
@@ -47,7 +47,7 @@ class UNetDecoderBlock(nn.Module):
     Decoder Block for U-Net
     Args:
         config (dict): A dictionary containing hyperparameters:\n 
-            structure (dict): Structure of Model: (\n
+            structure (dict): Structure of model: (\n
                 in_channels (int): Size of input channels,\n
                 hidden_channels (list): Size of hidden channels,\n
                 out_channels (int): Size of output channels)\n
@@ -57,10 +57,10 @@ class UNetDecoderBlock(nn.Module):
             group* (int or list): number of groups (must divide both in_channels and out_channels) (Set to 1 for default)\n
             dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n
             activation_func (str): Name of desired activation function\n
-            pooling (dict): Parameters of the pooling overation to reverse: (\n
-                method (str): pooling method,\n
-                kernel_sizes (int): pooling kernel size,\n
-                strides (int): pooling strides)\n
+            upsample (dict): Parameters of upsampling (equivalent to the pooling overation to reverse): (\n
+                method (str): Upsampling method,\n
+                kernel_sizes (int): Upsampling kernel size,\n
+                strides (int): Upsampling strides)\n
             bn (bool, optional): Whether to apply batch normalisation after convolution\n
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
@@ -70,13 +70,12 @@ class UNetDecoderBlock(nn.Module):
         self.act = getAct(config["activation_func"])   
         structure = structureLoader(config["structures"])
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
-        pool_data = list(config["pooling"].values())[1:]
 
+        self.upsample = getUpsample(structure[0], structure[0]//2, config["upsample"])
         self.layers = getLayers(getModel(config, "CNN"))[0]
-        self.convT = nn.ConvTranspose2d(structure[0], structure[0]//2, kernel_size=pool_data[0], stride=pool_data[1])
 
     def forward(self, x, x1):
-        x=self.convT(x)
+        x=self.upsample(x)
         dY, dX = x1.size()[2]-x.size()[2], x1.size()[3]-x.size()[3] # Match dimension of input
         x = F.pad(x, [dX//2, dX-dX//2, dY//2, dY-dY//2])
         x = cat((x,x1), dim=1)

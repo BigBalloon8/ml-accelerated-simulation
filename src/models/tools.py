@@ -58,7 +58,7 @@ def getAct(name):
         from torch.nn.functional import rrelu_
         return rrelu_
     else:
-        raise ValueError(f"Activation function [{name}] does not exist")
+        raise ValueError(f"Activation function [{name}] not defined")
 
 
 def getPool(config):
@@ -122,6 +122,9 @@ def getModel(config, name=None):
     elif name == "BCAT":
         from .BCAT import BCAT
         return BCAT(config, 64, 2)
+    elif name == "FCNHEAD":
+        from .FCN import FCNHead
+        return FCNHead(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
@@ -134,3 +137,31 @@ def getLayers(model):
     Return: a dictionary of the layers in the model
     '''
     return list(model.children())
+
+
+def getUpsample(in_channels, out_channels, config):
+    '''
+    Fetch upsampling methods
+    Args:
+        in_channels (int): Size of input channels,\n
+        out_channels (int): Size of output channels,\n
+        config (dict): Upsampling configuration: (\n
+            method (str): Upsampling method,\n
+            kernel_sizes (int): Upsampling kernel size,\n
+            strides (int): Upsampling strides)\n
+    Return: upsampling layers
+    '''
+    if config["method"].lower() == "bilinear":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["stride"], mode="bilinear", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    elif config["method"].lower() == "convtranspose" or config["method"].lower() == "convt":
+        from torch.nn import ConvTranspose2d
+        return ConvTranspose2d(in_channels, config["out_channels"], kernel_size=config["kernel_size"], stride=config["stride"])
+    elif config["method"].lower() == "nearest":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["stride"], mode="nearest", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    elif config["method"].lower() == "bicubic":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["stride"], mode="bicubic", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    else:
+        raise ValueError(f"Model Name [{config["method"].lower()}] not defined")

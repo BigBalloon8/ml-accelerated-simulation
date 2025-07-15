@@ -17,7 +17,7 @@
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 },
 {
     "name": "UNetEncoderBlock",
@@ -37,7 +37,7 @@
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 },
 {
     "name": "UNetEncoderBlock",
@@ -57,7 +57,7 @@
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 },
 {
     "name": "UNetEncoderBlock",
@@ -77,7 +77,7 @@
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 },
 {
     "name": "CNN",
@@ -92,7 +92,7 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "bn": true
+    "bn": false
 },
 {
     "name": "UNetDecoderBlock",
@@ -108,11 +108,11 @@
     "dropouts": 0,
     "activation_func": "relu",
     "pooling": {
-        "method": "max",
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 },
 {
     "name": "UNetDecoderBlock",
@@ -128,11 +128,11 @@
     "dropouts": 0,
     "activation_func": "relu",
     "pooling": {
-        "method": "max",
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 },
 {
     "name": "UNetDecoderBlock",
@@ -148,11 +148,11 @@
     "dropouts": 0,
     "activation_func": "relu",
     "pooling": {
-        "method": "max",
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 },
 {
     "name": "UNetDecoderBlock",
@@ -168,11 +168,11 @@
     "dropouts": 0,
     "activation_func": "relu",
     "pooling": {
-        "method": "max",
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 },
 {
     "name": "CNN",
