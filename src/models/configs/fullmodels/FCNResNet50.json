@@ -277,15 +277,15 @@
 {
     "name": "FCNHead",
     "structures": {
-        "in_channels": 2,
-        "hidden_channels": [4, 10, 10, 4],
+        "in_channels": 2048,
+        "hidden_channels": [512],
         "out_channels": 2
     },
-    "kernel_sizes": 3,
+    "kernel_sizes": [3, 1],
     "strides": 1,
-    "paddings": 1,
+    "paddings": [1, 0],
     "group": 1,
-    "dropouts": 0,
+    "dropouts": [0.1, 0],
     "activation_func": "relu",
     "bn": false,
     "upsample": {

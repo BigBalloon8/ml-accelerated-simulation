@@ -170,15 +170,15 @@ def getUpsample(in_channels, out_channels, config):
     '''
     if config["method"].lower() == "bilinear":
         from torch.nn import Sequential, Conv2d, Upsample
-        return Sequential(Upsample(scale_factor=config["stride"], mode="bilinear", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+        return Sequential(Upsample(scale_factor=config["strides"], mode="bilinear", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
     elif config["method"].lower() == "convtranspose" or config["method"].lower() == "convt":
         from torch.nn import ConvTranspose2d
-        return ConvTranspose2d(in_channels, config["out_channels"], kernel_size=config["kernel_size"], stride=config["stride"])
+        return ConvTranspose2d(in_channels, config["out_channels"], kernel_size=config["kernel_sizes"], stride=config["strides"])
     elif config["method"].lower() == "nearest":
         from torch.nn import Sequential, Conv2d, Upsample
-        return Sequential(Upsample(scale_factor=config["stride"], mode="nearest", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+        return Sequential(Upsample(scale_factor=config["strides"], mode="nearest", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
     elif config["method"].lower() == "bicubic":
         from torch.nn import Sequential, Conv2d, Upsample
-        return Sequential(Upsample(scale_factor=config["stride"], mode="bicubic", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+        return Sequential(Upsample(scale_factor=config["strides"], mode="bicubic", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
     else:
         raise ValueError(f"Model Name [{config["method"].lower()}] not defined")
