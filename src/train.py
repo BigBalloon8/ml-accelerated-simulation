@@ -59,7 +59,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
     logger = Logger(model_type, log_file)
 
-    EPOCHS = 50
+    EPOCHS = 500
     batchsize = 32
     gradient_accumulation_steps = 1
     local_batch_size = batchsize // gradient_accumulation_steps
@@ -114,7 +114,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
-        save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch:":e})    
+        save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    
 
         
 

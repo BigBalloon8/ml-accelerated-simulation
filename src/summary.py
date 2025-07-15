@@ -4,8 +4,7 @@ from models.tools import*
 import json
 import torch
 
-
-with open("src/models/configs/uNetEncoderBlock1.json", "r") as f:
+with open("src/models/configs/cnn3d.json", "r") as f:
     configs = json.load(f)
     model = buildModel(configs)
     #print(model)
