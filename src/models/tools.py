@@ -139,6 +139,9 @@ def getModel(config, name=None):
     elif name == "3DCNNSMART":
         from .CNN3D import CNN3DSmart
         return CNN3DSmart(config)
+    elif name == "FCNHEAD":
+        from .FCN import FCNHead
+        return FCNHead(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
