@@ -49,14 +49,20 @@ def getAct(name):
     elif name.lower() == "selu":
         return torch.selu_
     elif name.lower() == "gelu":
-        from torch.nn.functional import gelu
-        return gelu
+        return torch.nn.GELU
     elif name.lower() == "lrelu":
-        from torch.nn.functional import leaky_relu_
-        return leaky_relu_
-    elif name.lower() == "rrelu":
-        from torch.nn.functional import rrelu_
-        return rrelu_
+        return torch.nn.functional.leaky_relu_
+    elif name.lower() == "prelu":
+        pass
+        ## return torch.nn.PReLU
+    elif name.lower() == "elu":
+        return torch.nn.functional.elu_
+    elif name.lower() == "celu":
+        return torch.celu_
+    elif name.lower() == "softsign":
+        return torch.nn.Softsign
+    elif name.lower() == "tanshrink":
+        return torch.nn.Tanhshrink
     elif name.lower() == "identity":
         return lambda x: x
     elif name.lower() == "tanh":
