@@ -9,13 +9,16 @@ import json
 import os
 from typing import Tuple
 import random
+import hashlib
 
 from data.dataloader import get_kolomogrov_flow_data_loader
 from models import buildModel
 from log import Logger
 
 def hash_dict(x:dict):
-    return str(hash("".join(sorted(json.dumps(x, sort_keys=True)))))
+    formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
+    return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
+
 
 def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
