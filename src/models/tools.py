@@ -49,7 +49,7 @@ def getAct(name):
     elif name.lower() == "selu":
         return torch.selu_
     elif name.lower() == "gelu":
-        return torch.nn.GELU
+        return torch.nn.functional.gelu
     elif name.lower() == "lrelu":
         return torch.nn.functional.leaky_relu_
     elif name.lower() == "prelu":
@@ -60,9 +60,9 @@ def getAct(name):
     elif name.lower() == "celu":
         return torch.celu_
     elif name.lower() == "softsign":
-        return torch.nn.Softsign
+        return torch.nn.functional.softsign
     elif name.lower() == "tanshrink":
-        return torch.nn.Tanhshrink
+        return torch.nn.functional.tanhshrink
     elif name.lower() == "identity":
         return lambda x: x
     elif name.lower() == "tanh":
