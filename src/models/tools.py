@@ -148,6 +148,9 @@ def getModel(config, name=None):
     elif name == "FCNHEAD":
         from .FCN import FCNHead
         return FCNHead(config)
+    elif name == "PRELUCNN":
+        from .CNN import PreluCNN
+        return PreluCNN(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
