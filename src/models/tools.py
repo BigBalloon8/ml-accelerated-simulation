@@ -1,4 +1,5 @@
 import torch
+from functools import partial
 
 def paramToList(param, dimension):
         '''
@@ -68,6 +69,8 @@ def getAct(name):
         def shifted_sigmoid(x:torch.Tensor):
             return 2*torch.sigmoid_(x) - 1
         return shifted_sigmoid
+    elif name.lower() == "img_softmax":
+        return partial(torch.softmax, dim=1)
     else:
         raise ValueError(f"Activation function [{name}] does not exist")
 
@@ -139,6 +142,9 @@ def getModel(config, name=None):
     elif name == "3DCNNSMART":
         from .CNN3D import CNN3DSmart
         return CNN3DSmart(config)
+    elif name == "FC":
+        from .MLP import FC
+        return FC(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
     
