@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from tqdm import tqdm
 import safetensors.torch as st
@@ -10,6 +11,7 @@ import os
 from typing import Tuple
 import random
 import hashlib
+from functools import partial
 
 from data.dataloader import get_kolomogrov_flow_data_loader
 from models import buildModel
@@ -74,8 +76,8 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
 
-    criterion = nn.CrossEntropyLoss()
-    val_criterion = nn.CrossEntropyLoss(reduction="sum")
+    criterion = torch.vmap(torch.vmap(F.cross_entropy, in_dims=-1, out_dims=-1), in_dims=-1, out_dims=-1)
+    val_criterion = torch.vmap(torch.vmap(partial(F.cross_entropy, reduction="sum"), in_dims=-1, out_dims=-1), in_dims=-1, out_dims=-1)
 
     opt = torch.optim.Adam(model.parameters())
     if opt_state is not None:
@@ -93,7 +95,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 coarse, dif = coarse.to(device), dif.to(device)
                 dif_labels = torch.norm(dif, dim=1, keepdim=True).to(torch.int)
                 logits = model.forward(coarse)
-                loss = criterion.forward(logits, dif_labels)
+                loss = criterion(logits, dif_labels).mean()
                 loss.backward()
                 total_loss += loss.item()*batchsize
                 #if (i+1)%gradient_accumulation_steps==0:
@@ -111,7 +113,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     coarse, dif = coarse.to(device), dif.to(device)
                     dif_labels = torch.norm(dif, dim=1, keepdim=True).to(torch.int)
                     logits = model.forward(coarse)
-                    loss = criterion.forward(logits, dif_labels)
+                    loss = val_criterion(logits, dif_labels).mean()
                     total_loss += loss.item()
 
                     pbar.update(local_batch_size)
