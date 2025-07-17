@@ -107,6 +107,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         model.eval()
         with torch.no_grad():
             total_loss = 0
+            total_acc = 0
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
@@ -114,10 +115,12 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     logits = model.forward(coarse)
                     loss = criterion(logits, dif_labels).mean()
                     total_loss += loss.item()*batchsize
+                    total_acc += (torch.argmax(logits, dim=1)==dif_labels).sum()/torch.numel(dif_labels)
 
                     pbar.update(local_batch_size)
                     pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
+        logger.log(f"Validation Accuracy at Epoch {e+1}: {(total_acc*100)/(len(validation_dataloader)*local_batch_size):.4f}%")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    
