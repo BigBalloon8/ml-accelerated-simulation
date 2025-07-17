@@ -103,7 +103,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 opt.zero_grad()
                 pbar.update(local_batch_size)
                 pbar.set_description(f"Epoch {e+1} Loss: {loss.item():.8f}")
-        logger.log(f"Train Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
+        logger.log(f"Train Loss at Epoch {e+1}: {total_loss/(len(train_dataloader)*local_batch_size)}")
 
         model.eval()
         with torch.no_grad():
