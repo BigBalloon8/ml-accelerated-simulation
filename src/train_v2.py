@@ -91,7 +91,10 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
+                mask = (torch.norm(coarse, dim=1, keepdim=True) > 0.175).to(torch.bool)
                 pred = model.forward(coarse)
+                pred = torch.masked_select(pred, mask)
+                dif = torch.masked_select(dif, mask)
                 loss = criterion.forward(pred, dif)
                 loss.backward()
                 total_loss += loss.item()*batchsize
@@ -108,7 +111,10 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
+                    mask = (torch.norm(coarse, dim=1, keepdim=True) > 0.175).to(torch.bool)
                     pred = model.forward(coarse)
+                    pred = torch.masked_select(pred, mask)
+                    dif = torch.masked_select(dif, mask)
                     loss = val_criterion.forward(pred, dif)
                     total_loss += loss.item()
 
