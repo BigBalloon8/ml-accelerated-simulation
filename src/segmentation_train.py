@@ -91,9 +91,9 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                mask = torch.norm(dif, dim=1, keepdim=True).to(torch.int)
-                pred = model.forward(coarse)
-                loss = criterion.forward(pred, dif)
+                dif_labels = torch.norm(dif, dim=1, keepdim=True).to(torch.int)
+                logits = model.forward(coarse)
+                loss = criterion.forward(logits, dif_labels)
                 loss.backward()
                 total_loss += loss.item()*batchsize
                 #if (i+1)%gradient_accumulation_steps==0:
@@ -109,8 +109,9 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    pred = model.forward(coarse)
-                    loss = val_criterion.forward(pred, dif)
+                    dif_labels = torch.norm(dif, dim=1, keepdim=True).to(torch.int)
+                    logits = model.forward(coarse)
+                    loss = criterion.forward(logits, dif_labels)
                     total_loss += loss.item()
 
                     pbar.update(local_batch_size)
