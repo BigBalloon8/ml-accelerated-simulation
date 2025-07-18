@@ -92,7 +92,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                dif_labels = (torch.norm(dif, dim=1)>0.0025).to(torch.int64)
+                dif_labels = (torch.norm(dif, dim=1)>0.001).to(torch.int64)
                 logits = model.forward(coarse)
                 loss = criterion(logits, dif_labels).mean()
                 loss.backward()
@@ -102,7 +102,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 opt.zero_grad()
                 pbar.update(local_batch_size)
                 pbar.set_description(f"Epoch {e+1} Loss: {loss.item():.8f}")
-        logger.log(f"Train Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
+        logger.log(f"Train Loss at Epoch {e+1}: {total_loss/(len(train_dataloader)*local_batch_size)}")
 
         model.eval()
         with torch.no_grad():
@@ -111,7 +111,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    dif_labels = (torch.norm(dif, dim=1)>0.0025).to(torch.int64)
+                    dif_labels = (torch.norm(dif, dim=1)>0.001).to(torch.int64)
                     logits = model.forward(coarse)
                     loss = criterion(logits, dif_labels).mean()
                     total_loss += loss.item()*batchsize
@@ -120,7 +120,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     pbar.update(local_batch_size)
                     pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
-        logger.log(f"Validation Accuracy at Epoch {e+1}: {(total_acc*100)/(len(validation_dataloader)*local_batch_size):.4f}%")
+        logger.log(f"Validation Accuracy at Epoch {e+1}: {(total_acc*100)/(len(validation_dataloader)):.4f}%")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    
