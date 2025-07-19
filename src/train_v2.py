@@ -67,7 +67,7 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
 def get_mask(x, segment_model):
     with torch.no_grad():
         logits = torch.softmax(segment_model(x), dim=1)
-        return torch.argmax(logits, dim=1).to(torch.bool)
+        return torch.argmax(logits, dim=1, keepdim=True).to(torch.bool)
     
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config):
     torch.set_default_dtype(torch.float64)
@@ -102,19 +102,25 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
     #lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR
 
+    mask_stream = torch.cuda.Stream()
+    model_stream = torch.cuda.Stream()
+
     for e in range(metadata["last_epoch"]+1, EPOCHS):
         model.train()
         total_loss = 0
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                mask = get_mask(coarse, seg_model)
-                pred = model.forward(coarse)
+                with torch.cuda.stream(mask_stream):
+                    mask = get_mask(coarse, seg_model)
+                with torch.cuda.stream(model_stream):
+                    pred = model.forward(coarse)
+                torch.cuda.synchronize()
                 pred = torch.masked_select(pred, mask)
                 dif = torch.masked_select(dif, mask)
                 loss = criterion.forward(pred, dif)
                 loss.backward()
-                total_loss += loss.item()*batchsize
+                total_loss += loss.item()*local_batch_size
                 #if (i+1)%gradient_accumulation_steps==0:
                 opt.step()
                 opt.zero_grad()
@@ -128,8 +134,11 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    mask = get_mask(coarse, seg_model)
-                    pred = model.forward(coarse)
+                    with torch.cuda.stream(mask_stream):
+                        mask = get_mask(coarse, seg_model)
+                    with torch.cuda.stream(model_stream):
+                        pred = model.forward(coarse)
+                    torch.cuda.synchronize()
                     pred = torch.masked_select(pred, mask)
                     dif = torch.masked_select(dif, mask)
                     loss = val_criterion.forward(pred, dif)
