@@ -24,8 +24,8 @@ class DenseBlock(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"])        
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], [sum(structure[:i+1]) for i in range(len(structure)-1)]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]        
         kernel_sizes, strides, paddings, group = paramToList(config["kernel_sizes"], len(structure)-1), paramToList(config["strides"], len(structure)-1), paramToList(config["paddings"], len(structure)-1), paramToList(config["group"], len(structure)-1)
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         self.bn = config["bn"]
@@ -34,20 +34,21 @@ class DenseBlock(nn.Module):
             self.conv1 = nn.ModuleList([nn.BatchNorm2d(sum(structure)), nn.Conv2d(sum(structure), structure[-1], kernel_size=1)])
         else:
             self.layers = nn.ModuleList([nn.Conv2d(sum(structure[:i+1]), structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
-            self.conv1 = nn.Conv2d(sum(structure), structure[-1], kernel_size=1)
+            self.conv1 = nn.Sequential(nn.Conv2d(sum(structure), structure[-1], kernel_size=1))
+        self.act1 = getAct(config["activation_func"], [sum(structure)])[0] if config["activation_func"].lower() == "prelu" else getAct(config["activation_func"])
 
 
     def forward(self, x):
         if self.bn:
             for i, layer in enumerate(self.layers):
-                y = F.dropout(layer[1](self.act(layer[0](x))), p=self.dropouts[i], training=self.training)
+                y = F.dropout(layer[1](self.act[i](layer[0](x))), p=self.dropouts[i], training=self.training)
                 x = cat((x,y), dim=1) # concaternate along channels
-            return self.conv1[1](self.act(self.conv1[0](x))) # reduce channel size down to the desired output size
+            return self.conv1[1](self.act1(self.conv1[0](x))) # reduce channel size down to the desired output size
         else:
             for i, layer in enumerate(self.layers):
-                y = F.dropout(layer(self.act(x)), p=self.dropouts[i], training=self.training)
+                y = F.dropout(layer(self.act[i](x)), p=self.dropouts[i], training=self.training)
                 x = cat((x,y), dim=1) # concaternate along channels
-            return self.conv1(self.act(x)) # reduce channel size down to the desired output size
+            return self.conv1(self.act1(x)) # reduce channel size down to the desired output size
 
 if __name__ == "__main__":
     import json

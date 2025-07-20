@@ -19,8 +19,8 @@ class MLP(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"])
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         dim = config["dimension"]
         
@@ -31,7 +31,7 @@ class MLP(nn.Module):
         x = x.flatten(1, -1)
         for i, layer in enumerate(self.layers):
             if i < len(self.layers)-1:
-                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
+                x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
         return layer(x).reshape((input_shape[0], -1, input_shape[2], input_shape[3]))
 
 class FC(nn.Module):
@@ -40,8 +40,8 @@ class FC(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"])
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         
         self.layers = nn.ModuleList([nn.Linear(structure[i], structure[i+1]) for i in range(len(structure)-1)])
@@ -51,7 +51,7 @@ class FC(nn.Module):
         x = x.flatten(1, -1)
         for i, layer in enumerate(self.layers):
             if i < len(self.layers)-1:
-                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
+                x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
         return layer(x).reshape((input_shape[0], -1, input_shape[2], input_shape[3]))
 
 

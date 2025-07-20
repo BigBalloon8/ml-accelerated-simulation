@@ -11,6 +11,6 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "prelu"
 }
 ]

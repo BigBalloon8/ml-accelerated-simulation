@@ -24,8 +24,8 @@ class CNN3D(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"])        
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]    
         kernel_sizes, strides, paddings, group = paramToList(config["kernel_sizes"], len(structure)-1), paramToList(config["strides"], len(structure)-1), paramToList(config["paddings"], len(structure)-1), paramToList(config["group"], len(structure)-1)
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         self.layers = nn.ModuleList([nn.Conv3d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
@@ -34,7 +34,7 @@ class CNN3D(nn.Module):
         x = x.unsqueeze(1)
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
+                x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
         return layer(x).squeeze(1)
 
 class CNN3DSmart(nn.Module):
@@ -57,8 +57,8 @@ class CNN3DSmart(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"])        
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
         kernel_sizes, strides, paddings, group = paramToList(config["kernel_sizes"], len(structure)-1), paramToList(config["strides"], len(structure)-1), paramToList(config["paddings"], len(structure)-1), paramToList(config["group"], len(structure)-1)
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
         self.layers = nn.ModuleList([nn.Conv3d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
@@ -68,7 +68,7 @@ class CNN3DSmart(nn.Module):
         x = x.unsqueeze(1)
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
+                x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
         out = layer(x).squeeze(1)
         return torch.stack([out[:, 0], out[:, 2]], dim= 1)
 
