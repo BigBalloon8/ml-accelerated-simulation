@@ -50,14 +50,20 @@ def getAct(name):
     elif name.lower() == "selu":
         return torch.selu_
     elif name.lower() == "gelu":
-        from torch.nn.functional import gelu
-        return gelu
+        return torch.nn.functional.gelu
     elif name.lower() == "lrelu":
-        from torch.nn.functional import leaky_relu_
-        return leaky_relu_
-    elif name.lower() == "rrelu":
-        from torch.nn.functional import rrelu_
-        return rrelu_
+        return torch.nn.functional.leaky_relu_
+    elif name.lower() == "prelu":
+        pass
+        ## return torch.nn.PReLU
+    elif name.lower() == "elu":
+        return torch.nn.functional.elu_
+    elif name.lower() == "celu":
+        return torch.celu_
+    elif name.lower() == "softsign":
+        return torch.nn.functional.softsign
+    elif name.lower() == "tanshrink":
+        return torch.nn.functional.tanhshrink
     elif name.lower() == "identity":
         return lambda x: x
     elif name.lower() == "tanh":
@@ -72,7 +78,7 @@ def getAct(name):
     elif name.lower() == "img_softmax":
         return partial(torch.softmax, dim=1)
     else:
-        raise ValueError(f"Activation function [{name}] does not exist")
+        raise ValueError(f"Activation function [{name}] not defined")
 
 
 def getPool(config):
@@ -142,6 +148,12 @@ def getModel(config, name=None):
     elif name == "3DCNNSMART":
         from .CNN3D import CNN3DSmart
         return CNN3DSmart(config)
+    elif name == "FCNHEAD":
+        from .FCN import FCNHead
+        return FCNHead(config)
+    elif name == "PRELUCNN":
+        from .CNN import PreluCNN
+        return PreluCNN(config)
     elif name == "FC":
         from .MLP import FC
         return FC(config)
@@ -157,3 +169,31 @@ def getLayers(model):
     Return: a dictionary of the layers in the model
     '''
     return list(model.children())
+
+
+def getUpsample(in_channels, out_channels, config):
+    '''
+    Fetch upsampling methods
+    Args:
+        in_channels (int): Size of input channels,\n
+        out_channels (int): Size of output channels,\n
+        config (dict): Upsampling configuration: (\n
+            method (str): Upsampling method,\n
+            kernel_sizes (int): Upsampling kernel size,\n
+            strides (int): Upsampling strides)\n
+    Return: upsampling layers
+    '''
+    if config["method"].lower() == "bilinear":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["strides"], mode="bilinear", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    elif config["method"].lower() == "convtranspose" or config["method"].lower() == "convt":
+        from torch.nn import ConvTranspose2d
+        return ConvTranspose2d(in_channels, config["out_channels"], kernel_size=config["kernel_sizes"], stride=config["strides"])
+    elif config["method"].lower() == "nearest":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["strides"], mode="nearest", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    elif config["method"].lower() == "bicubic":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["strides"], mode="bicubic", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    else:
+        raise ValueError(f"Model Name not defined")

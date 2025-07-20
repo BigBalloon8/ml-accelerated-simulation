@@ -11,7 +11,8 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "lrelu",
+    "bn": true
 },{
     "name": "DenseNetBlock",
     "structures": {
@@ -24,7 +25,8 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "lrelu",
+    "bn": true
 },{
     "name": "DenseNetBlock",
     "structures": {
@@ -37,7 +39,8 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "lrelu",
+    "bn": true
 },{
     "name": "DenseNetBlock",
     "structures": {
@@ -50,7 +53,8 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "lrelu",
+    "bn": true
 },{
     "name": "DenseNetBlock",
     "structures": {
@@ -63,7 +67,8 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "lrelu",
+    "bn": true
 },{
     "name": "DenseNetBlock",
     "structures": {
@@ -76,6 +81,7 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "lrelu",
+    "bn": true
 }
 ]

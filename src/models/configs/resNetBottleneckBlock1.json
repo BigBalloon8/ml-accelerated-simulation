@@ -12,6 +12,7 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "1x1_conv": true
+    "1x1_conv": true,
+    "bn": false
 }
 ]
