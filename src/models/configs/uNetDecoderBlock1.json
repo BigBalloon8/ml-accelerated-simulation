@@ -11,12 +11,12 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu",
+    "activation_func": "prelu",
     "upsample": {
         "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
     },
-    "bn": true
+    "bn": false
 }
 ]

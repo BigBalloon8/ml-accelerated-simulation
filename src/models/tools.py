@@ -37,7 +37,7 @@ def structureLoader(structure):
         raise TypeError("Structure has to be a dictionary with 3 entries")
 
 
-def getAct(name):
+def getAct(name, structure=None):
     """
     Load activation functions
     Args:
@@ -54,8 +54,7 @@ def getAct(name):
     elif name.lower() == "lrelu":
         return torch.nn.functional.leaky_relu_
     elif name.lower() == "prelu":
-        pass
-        ## return torch.nn.PReLU
+        return torch.nn.ModuleList([torch.nn.PReLU(i) for i in structure])
     elif name.lower() == "elu":
         return torch.nn.functional.elu_
     elif name.lower() == "celu":
@@ -188,7 +187,7 @@ def getUpsample(in_channels, out_channels, config):
         return Sequential(Upsample(scale_factor=config["strides"], mode="bilinear", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
     elif config["method"].lower() == "convtranspose" or config["method"].lower() == "convt":
         from torch.nn import ConvTranspose2d
-        return ConvTranspose2d(in_channels, config["out_channels"], kernel_size=config["kernel_sizes"], stride=config["strides"])
+        return ConvTranspose2d(in_channels, out_channels, kernel_size=config["kernel_sizes"], stride=config["strides"])
     elif config["method"].lower() == "nearest":
         from torch.nn import Sequential, Conv2d, Upsample
         return Sequential(Upsample(scale_factor=config["strides"], mode="nearest", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))

@@ -107,7 +107,7 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
+    "upsample": {
         "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
@@ -127,7 +127,7 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
+    "upsample": {
         "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
@@ -147,7 +147,7 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
+    "upsample": {
         "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
@@ -167,7 +167,7 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
+    "upsample": {
         "method": "convt",
         "kernel_sizes": 2,
         "strides": 2

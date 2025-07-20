@@ -11,7 +11,7 @@
     "paddings": [0, 1, 0],
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu",
+    "activation_func": "prelu",
     "1x1_conv": true,
     "bn": false
 }

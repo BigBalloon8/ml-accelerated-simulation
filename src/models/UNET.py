@@ -28,8 +28,8 @@ class UNetEncoderBlock(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"])
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
         self.layers = getLayers(getModel(config, "CNN"))[0]
@@ -37,7 +37,7 @@ class UNetEncoderBlock(nn.Module):
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):
-            x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
+            x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
         return self.pool(x), x
     
 
@@ -67,8 +67,8 @@ class UNetDecoderBlock(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"])   
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
         self.upsample = getUpsample(structure[0], structure[0]//2, config["upsample"])
@@ -81,7 +81,7 @@ class UNetDecoderBlock(nn.Module):
         x = cat((x,x1), dim=1)
 
         for i, layer in enumerate(self.layers):
-            x = F.dropout(self.act(layer(x)), p=self.dropouts[i], training=self.training)
+            x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
         return x
 
 

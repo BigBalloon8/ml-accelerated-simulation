@@ -26,8 +26,8 @@ class ResNetBlock(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"])        
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
         self.layers = getLayers(getModel(config, "CNN"))[0]
@@ -38,15 +38,16 @@ class ResNetBlock(nn.Module):
                 self.conv1 = nn.Identity()
         except(KeyError):
             self.conv1 = nn.Identity()
+        self.act1 = getAct(config["activation_func"], [structure[-1]])[0] if config["activation_func"].lower() == "prelu" else getAct(config["activation_func"])
 
     def forward(self, x):
         y = x
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                y = F.dropout(self.act(layer(y)), p=self.dropouts[i], training=self.training)
+                y = F.dropout(self.act[i](layer(y)), p=self.dropouts[i], training=self.training)
         y = layer(y)
         x = self.conv1(x)
-        return self.act(x+y)
+        return self.act1(x+y)
 
 
 
@@ -72,8 +73,8 @@ class ResNeXtBlock(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.act = getAct(config["activation_func"]) 
         structure = structureLoader(config["structures"])
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
 
         self.layers = getLayers(getModel(config, "CNN"))[0]
@@ -84,16 +85,17 @@ class ResNeXtBlock(nn.Module):
                 self.conv1 = nn.Identity()
         except(KeyError):
             self.conv1 = nn.Conv2d(structure[0], structure[-1], kernel_size=1) if "1x1_conv" in config else nn.Identity()
+        self.act1 = getAct(config["activation_func"], [structure[-1]])[0] if config["activation_func"].lower() == "prelu" else getAct(config["activation_func"])
 
 
     def forward(self, x):
         y = x
         for i, layer in enumerate(self.layers):
             if i < len(self.layers) - 1:
-                y = F.dropout(self.act(layer(y)), p=self.dropouts[i], training=self.training)
+                y = F.dropout(self.act[i](layer(y)), p=self.dropouts[i], training=self.training)
         y = layer(y)
         x = self.conv1(x)
-        return self.act(x+y)
+        return self.act1(x+y)
 
 
 
