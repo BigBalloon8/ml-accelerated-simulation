@@ -1,0 +1,16 @@
+[
+{
+    "name": "3DCNNSMART",
+    "structures": {
+        "in_channels": 1,
+        "hidden_channels": [64, 64, 64, 64, 64, 64],
+        "out_channels": 1
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 1,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "prelu"
+}
+]

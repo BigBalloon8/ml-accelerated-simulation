@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from tqdm import tqdm
 import safetensors.torch as st
@@ -10,6 +11,7 @@ import os
 from typing import Tuple
 import random
 import hashlib
+from functools import partial
 
 from data.dataloader import get_kolomogrov_flow_data_loader
 from models import buildModel
@@ -27,12 +29,12 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[n
 
     model_base = buildModel(config)
     
-    if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
-        print(f"Model Found in {checkpoint_path}: {name}_{hash_dict(config)}.safetensors")
-        model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
-        opt_path = os.path.join(checkpoint_path, f"{name}_ADAM_{hash_dict(config)}.pt")
+    if f"{name}_{hash_dict(config)}_seg.safetensors" in os.listdir(checkpoint_path) and not new_run:
+        print(f"Model Found in {checkpoint_path}: {name}_{hash_dict(config)}_seg.safetensors")
+        model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.safetensors")
+        opt_path = os.path.join(checkpoint_path, f"{name}_ADAM_{hash_dict(config)}_seg.pt")
         model_weights = st.load_file(model_path)
-        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.json"), "r") as f:
+        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.json"), "r") as f:
             metadata = json.load(f)
         model_base.load_state_dict(model_weights)
         opt_state = torch.load(opt_path)
@@ -46,9 +48,9 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
     with open(model_config, "r") as f:
         config = json.load(f)
     metadata["model_config"] = config
-    model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.safetensors")
-    opt_path = os.path.join(checkpoint_path, f"{model_type}_ADAM_{hash_dict(config)}.pt")
-    with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.json"), "w") as f:
+    model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}_seg.safetensors")
+    opt_path = os.path.join(checkpoint_path, f"{model_type}_ADAM_{hash_dict(config)}_seg.pt")
+    with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}_seg.json"), "w") as f:
         json.dump(metadata, f)
     st.save_model(model, model_path)
     #print(opt.state_dict())
@@ -74,10 +76,9 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
 
-    criterion = nn.MSELoss()
-    val_criterion = nn.MSELoss(reduction="sum")
+    criterion = torch.vmap(torch.vmap(F.cross_entropy, in_dims=-1, out_dims=-1), in_dims=-1, out_dims=-1)
 
-    opt = torch.optim.Adam(model.parameters(), weight_decay=1e-4, amsgrad=True)
+    opt = torch.optim.Adam(model.parameters())
     if opt_state is not None:
         opt.load_state_dict(opt_state)
     
@@ -91,8 +92,9 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                pred = model.forward(coarse)
-                loss = criterion.forward(pred, dif)
+                dif_labels = (torch.norm(dif, dim=1)>0.0025).to(torch.int64)
+                logits = model.forward(coarse)
+                loss = criterion(logits, dif_labels).mean()
                 loss.backward()
                 total_loss += loss.item()*batchsize
                 #if (i+1)%gradient_accumulation_steps==0:
@@ -105,16 +107,20 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         model.eval()
         with torch.no_grad():
             total_loss = 0
+            total_acc = 0
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    pred = model.forward(coarse)
-                    loss = val_criterion.forward(pred, dif)
-                    total_loss += loss.item()
+                    dif_labels = (torch.norm(dif, dim=1)>0.0025).to(torch.int64)
+                    logits = model.forward(coarse)
+                    loss = criterion(logits, dif_labels).mean()
+                    total_loss += loss.item()*batchsize
+                    total_acc += (torch.argmax(logits, dim=1)==dif_labels).sum()/torch.numel(dif_labels)
 
                     pbar.update(local_batch_size)
                     pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
+        logger.log(f"Validation Accuracy at Epoch {e+1}: {(total_acc*100)/(len(validation_dataloader)):.4f}%")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    

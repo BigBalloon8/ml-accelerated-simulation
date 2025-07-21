@@ -11,7 +11,12 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu",
-    "bn": true
+    "activation_func": "prelu",
+    "bn": false,
+    "pooling": {
+        "method": "max",
+        "kernel_sizes": 2,
+        "strides": 2
+    }
 }
 ]

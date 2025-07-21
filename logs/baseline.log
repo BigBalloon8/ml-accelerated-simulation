@@ -1,0 +1,711 @@
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 5.947969266986141e-06
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 5.947969266986136e-06
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 5.94796926698613e-06
+Validation Loss at Epoch 1: 0.06560814112382905
+Train Loss at Epoch 2: 7.4056400768108545e-06
+Validation Loss at Epoch 2: 0.03813353412530758
+Train Loss at Epoch 3: 2.8358446471617755e-06
+Validation Loss at Epoch 3: 0.02942259999728422
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 5.947969266986098e-06
+Validation Loss at Epoch 1: 0.06560814112382951
+Train Loss at Epoch 2: 7.40564007678115e-06
+Validation Loss at Epoch 2: 0.038133534125996196
+Train Loss at Epoch 3: 2.8358446591688115e-06
+Validation Loss at Epoch 3: 0.029422599967099797
+Train Loss at Epoch 4: 4.25426185908376e-06
+Validation Loss at Epoch 4: 0.025819426269287234
+Train Loss at Epoch 5: 2.1894023282546775e-06
+Validation Loss at Epoch 5: 0.024017040528309542
+Train Loss at Epoch 6: 3.1144780521671323e-06
+Validation Loss at Epoch 6: 0.021871447781881943
+Train Loss at Epoch 7: 3.689714310842126e-06
+Validation Loss at Epoch 7: 0.020921154253954403
+Train Loss at Epoch 8: 2.290556425592818e-06
+Validation Loss at Epoch 8: 0.024636234596325943
+Train Loss at Epoch 9: 8.080046928010078e-07
+Validation Loss at Epoch 9: 0.01871234424605688
+Train Loss at Epoch 10: 9.122168765798521e-07
+Validation Loss at Epoch 10: 0.017579535426092342
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 1.0201695379754246e-05
+Validation Loss at Epoch 1: 0.11015288919504988
+Train Loss at Epoch 2: 1.9395876712397246e-05
+Validation Loss at Epoch 2: 0.10633004336376398
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 8.463512610079957e-06
+Validation Loss at Epoch 1: 0.09417687571075438
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 0.04299846179513549
+Validation Loss at Epoch 1: 0.05804064678845765
+Train Loss at Epoch 2: 0.053371595462670056
+Validation Loss at Epoch 2: 0.034615113552111755
+Train Loss at Epoch 3: 0.022832907119073063
+Validation Loss at Epoch 3: 0.029470680594767856
+Train Loss at Epoch 4: 0.033182670006849026
+Validation Loss at Epoch 4: 0.02586935709958111
+Train Loss at Epoch 5: 0.018178515437409212
+Validation Loss at Epoch 5: 0.025283520803049877
+Train Loss at Epoch 6: 0.025561783953303698
+Validation Loss at Epoch 6: 0.021869091368700577
+Train Loss at Epoch 7: 0.030492156655282234
+Validation Loss at Epoch 7: 0.02096517644837086
+Train Loss at Epoch 8: 0.014077756294191073
+Validation Loss at Epoch 8: 0.020317266313597652
+Train Loss at Epoch 9: 0.0069205413204322126
+Validation Loss at Epoch 9: 0.01991788443450531
+Train Loss at Epoch 10: 0.007515688275170897
+Validation Loss at Epoch 10: 0.017829802835766236
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 5.947969266986132e-06
+Validation Loss at Epoch 1: 0.06560814112382903
+Train Loss at Epoch 2: 7.405640076808396e-06
+Validation Loss at Epoch 2: 0.038133534125364445
+Train Loss at Epoch 3: 2.835844648153293e-06
+Validation Loss at Epoch 3: 0.02942259999479168
+Train Loss at Epoch 4: 4.209570369376648e-06
+Validation Loss at Epoch 4: 0.025759236943599405
+Train Loss at Epoch 5: 2.241970996308467e-06
+Validation Loss at Epoch 5: 0.024376135519844105
+Train Loss at Epoch 6: 3.066456518820688e-06
+Validation Loss at Epoch 6: 0.021891302517553116
+Train Loss at Epoch 7: 3.6899826798664438e-06
+Validation Loss at Epoch 7: 0.020790231613163564
+Train Loss at Epoch 8: 1.936752482249536e-06
+Validation Loss at Epoch 8: 0.02339168788406386
+Train Loss at Epoch 9: 8.072023164939413e-07
+Validation Loss at Epoch 9: 0.01903801677695323
+Train Loss at Epoch 10: 9.01978777908302e-07
+Validation Loss at Epoch 10: 0.017628058464543614
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu'}]
+Train Loss at Epoch 1: 9.293701979665709e-08
+Validation Loss at Epoch 1: 0.0656081411238301
+Train Loss at Epoch 2: 1.1571312619874137e-07
+Validation Loss at Epoch 2: 0.038133534127424124
+Train Loss at Epoch 3: 4.45340062429668e-08
+Validation Loss at Epoch 3: 0.02960590933450637
+Train Loss at Epoch 4: 6.648544263772083e-08
+Validation Loss at Epoch 4: 0.02620640643845925
+Train Loss at Epoch 5: 3.4629692927898224e-08
+Validation Loss at Epoch 5: 0.02444551859484134
+Train Loss at Epoch 6: 4.87251507440716e-08
+Validation Loss at Epoch 6: 0.022084967157071284
+Train Loss at Epoch 7: 5.797986725135536e-08
+Validation Loss at Epoch 7: 0.020391338885386263
+Train Loss at Epoch 8: 2.6713698936652947e-08
+Validation Loss at Epoch 8: 0.020088503563127393
+Train Loss at Epoch 9: 1.5324281111743107e-08
+Validation Loss at Epoch 9: 0.023107189932063933
+Train Loss at Epoch 10: 1.419305499696247e-08
+Validation Loss at Epoch 10: 0.01756839527229097
+Train Loss at Epoch 11: 5.3632187130085676e-08
+Validation Loss at Epoch 11: 0.01694051893160155
+Train Loss at Epoch 12: 6.531776323377388e-08
+Validation Loss at Epoch 12: 0.016579536177042286
+Train Loss at Epoch 13: 2.3778346546877387e-08
+Validation Loss at Epoch 13: 0.01611899823333511
+Train Loss at Epoch 14: 2.949709500084782e-08
+Validation Loss at Epoch 14: 0.015328853485456605
+Train Loss at Epoch 15: 5.770281804878737e-08
+Validation Loss at Epoch 15: 0.014951193894868792
+Train Loss at Epoch 16: 4.216731608425846e-08
+Validation Loss at Epoch 16: 0.014759959063799217
+Train Loss at Epoch 17: 2.1174470177773223e-08
+Validation Loss at Epoch 17: 0.014910434711346336
+Train Loss at Epoch 18: 1.6530689156832916e-08
+Validation Loss at Epoch 18: 0.013987540881984907
+Train Loss at Epoch 19: 3.62427319124721e-08
+Validation Loss at Epoch 19: 0.01318133730832459
+Train Loss at Epoch 20: 1.3696875600900373e-08
+Validation Loss at Epoch 20: 0.013586438853404248
+Train Loss at Epoch 21: 4.793558856531445e-08
+Validation Loss at Epoch 21: 0.012980449389841482
+Train Loss at Epoch 22: 8.922800211004413e-09
+Validation Loss at Epoch 22: 0.012229990831080268
+Train Loss at Epoch 23: 1.3442930632159404e-08
+Validation Loss at Epoch 23: 0.01214996716827677
+Train Loss at Epoch 24: 1.5192434860943982e-08
+Validation Loss at Epoch 24: 0.011891124276058259
+Train Loss at Epoch 25: 2.492023672437925e-08
+Validation Loss at Epoch 25: 0.011740104065954885
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Train Loss at Epoch 1: 7.96600414285507e-08
+Validation Loss at Epoch 1: 0.05641995970508621
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Train Loss at Epoch 1: 7.966004142855072e-08
+Validation Loss at Epoch 1: 0.05641995970508628
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Train Loss at Epoch 1: 7.966004142855087e-08
+Validation Loss at Epoch 1: 0.05641995970508631
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Train Loss at Epoch 1: 7.966004142855082e-08
+Validation Loss at Epoch 1: 0.05641995970508629
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'relu', 'bn': False}]
+Train Loss at Epoch 1: 9.29370197966559e-08
+Validation Loss at Epoch 1: 0.06560814112383108
+Train Loss at Epoch 2: 1.1571312619711994e-07
+Validation Loss at Epoch 2: 0.03813353412982491
+Train Loss at Epoch 3: 4.442770197157379e-08
+Validation Loss at Epoch 3: 0.029526716871876073
+Train Loss at Epoch 4: 6.662727770023439e-08
+Validation Loss at Epoch 4: 0.025645333848584324
+Train Loss at Epoch 5: 3.607098848199426e-08
+Validation Loss at Epoch 5: 0.0250747101594729
+Train Loss at Epoch 6: 4.712624905684025e-08
+Validation Loss at Epoch 6: 0.021797426051643153
+Train Loss at Epoch 7: 5.715806121578067e-08
+Validation Loss at Epoch 7: 0.020616627525597793
+Train Loss at Epoch 8: 2.637888892613153e-08
+Validation Loss at Epoch 8: 0.019422146746516083
+Train Loss at Epoch 9: 1.262430206489062e-08
+Validation Loss at Epoch 9: 0.019314490913610483
+Train Loss at Epoch 10: 1.440163003042296e-08
+Validation Loss at Epoch 10: 0.017636632771498337
+Train Loss at Epoch 11: 5.420027592980743e-08
+Validation Loss at Epoch 11: 0.016961455884252602
+Train Loss at Epoch 12: 6.620395543873921e-08
+Validation Loss at Epoch 12: 0.016788773131844785
+Train Loss at Epoch 13: 2.3974348763396896e-08
+Validation Loss at Epoch 13: 0.016378938248324627
+Train Loss at Epoch 14: 2.937495948268687e-08
+Validation Loss at Epoch 14: 0.015491886040791995
+Train Loss at Epoch 15: 5.875970762758229e-08
+Validation Loss at Epoch 15: 0.01489440249854818
+Train Loss at Epoch 16: 4.153046095821644e-08
+Validation Loss at Epoch 16: 0.014290912695253047
+Train Loss at Epoch 17: 1.9897785281540727e-08
+Validation Loss at Epoch 17: 0.014429601160324617
+Train Loss at Epoch 18: 1.6180052136227088e-08
+Validation Loss at Epoch 18: 0.013830017898279761
+Train Loss at Epoch 19: 3.5734629809431586e-08
+Validation Loss at Epoch 19: 0.013546068851006562
+Train Loss at Epoch 20: 1.4919734855933356e-08
+Validation Loss at Epoch 20: 0.013232774367787277
+Train Loss at Epoch 21: 4.658877247492927e-08
+Validation Loss at Epoch 21: 0.012725916420371472
+Train Loss at Epoch 22: 8.776804370907843e-09
+Validation Loss at Epoch 22: 0.01220568439794136
+Train Loss at Epoch 23: 1.3253084549973859e-08
+Validation Loss at Epoch 23: 0.012100764873514407
+Train Loss at Epoch 24: 1.5133301349214397e-08
+Validation Loss at Epoch 24: 0.01174829156484973
+Train Loss at Epoch 25: 2.443958060818099e-08
+Validation Loss at Epoch 25: 0.011890562666586793
+Train Loss at Epoch 26: 2.243884092805388e-08
+Validation Loss at Epoch 26: 0.01135848488652917
+Train Loss at Epoch 27: 2.6639408301338822e-08
+Validation Loss at Epoch 27: 0.01112462593052671
+Train Loss at Epoch 28: 1.0374379178885394e-08
+Validation Loss at Epoch 28: 0.01126653872275508
+Train Loss at Epoch 29: 2.4282211852247384e-08
+Validation Loss at Epoch 29: 0.011448929922763333
+Train Loss at Epoch 30: 3.6643100943587263e-08
+Validation Loss at Epoch 30: 0.011301258129362937
+Train Loss at Epoch 31: 1.0067954599247231e-08
+Validation Loss at Epoch 31: 0.011281679070502492
+Train Loss at Epoch 32: 9.961352371963758e-09
+Validation Loss at Epoch 32: 0.010377486144792947
+Train Loss at Epoch 33: 2.1602841734225315e-08
+Validation Loss at Epoch 33: 0.01047955733626798
+Train Loss at Epoch 34: 3.021878856060223e-08
+Validation Loss at Epoch 34: 0.01005630212908495
+Train Loss at Epoch 35: 7.093635181677375e-09
+Validation Loss at Epoch 35: 0.010013325611971133
+Train Loss at Epoch 36: 1.807963668338424e-08
+Validation Loss at Epoch 36: 0.010025941448059891
+Train Loss at Epoch 37: 3.197489070734878e-08
+Validation Loss at Epoch 37: 0.010258987691251008
+Train Loss at Epoch 38: 2.5978052294666208e-08
+Validation Loss at Epoch 38: 0.009530328904594359
+Train Loss at Epoch 39: 1.4267018422307521e-08
+Validation Loss at Epoch 39: 0.009978573060388813
+Train Loss at Epoch 40: 9.579741539681661e-09
+Validation Loss at Epoch 40: 0.009556106967450675
+Train Loss at Epoch 41: 1.6424822885224024e-08
+Validation Loss at Epoch 41: 0.009909510105689186
+Train Loss at Epoch 42: 1.7161479578130183e-08
+Validation Loss at Epoch 42: 0.009233913927353685
+Train Loss at Epoch 43: 1.3937548234218715e-08
+Validation Loss at Epoch 43: 0.009119863571215291
+Train Loss at Epoch 44: 3.9339629844717944e-08
+Validation Loss at Epoch 44: 0.01118697816158829
+Train Loss at Epoch 45: 3.3500695729020276e-08
+Validation Loss at Epoch 45: 0.009105537334220423
+Train Loss at Epoch 46: 3.567802045402953e-08
+Validation Loss at Epoch 46: 0.008691694305689621
+Train Loss at Epoch 47: 1.6338137321301518e-08
+Validation Loss at Epoch 47: 0.00870267197144333
+Train Loss at Epoch 48: 2.9418118631896317e-08
+Validation Loss at Epoch 48: 0.008908761690000655
+Train Loss at Epoch 49: 1.5638157127292195e-08
+Validation Loss at Epoch 49: 0.010138729954057289
+Train Loss at Epoch 50: 1.2867271110026894e-08
+Validation Loss at Epoch 50: 0.008786661085517348
+Train Loss at Epoch 51: 2.5411735223020097e-08
+Validation Loss at Epoch 51: 0.00907608507142742
+Train Loss at Epoch 52: 1.7239968697692053e-08
+Validation Loss at Epoch 52: 0.008520376249724588
+Train Loss at Epoch 53: 1.8752301535308436e-08
+Validation Loss at Epoch 53: 0.008382154320889134
+Train Loss at Epoch 54: 1.724358697568008e-08
+Validation Loss at Epoch 54: 0.008417581797366699
+Train Loss at Epoch 55: 1.0986272225419494e-08
+Validation Loss at Epoch 55: 0.008494855832526061
+Train Loss at Epoch 56: 1.4830391523811623e-08
+Validation Loss at Epoch 56: 0.00818282644192901
+Train Loss at Epoch 57: 6.63940247544498e-09
+Validation Loss at Epoch 57: 0.008909302333523782
+Train Loss at Epoch 58: 1.899873239210669e-08
+Validation Loss at Epoch 58: 0.007964427032113738
+Train Loss at Epoch 59: 2.3615749798377542e-08
+Validation Loss at Epoch 59: 0.008457064795407306
+Train Loss at Epoch 60: 1.5850425612661157e-08
+Validation Loss at Epoch 60: 0.008250685587398462
+Train Loss at Epoch 61: 1.684101871573733e-08
+Validation Loss at Epoch 61: 0.009932037909398036
+Train Loss at Epoch 62: 2.2912128665748793e-08
+Validation Loss at Epoch 62: 0.007987994380581837
+Train Loss at Epoch 63: 2.1457844517815112e-08
+Validation Loss at Epoch 63: 0.008011883281609525
+Train Loss at Epoch 64: 8.392408319729344e-09
+Validation Loss at Epoch 64: 0.007994777135257572
+Train Loss at Epoch 65: 8.588391250572748e-09
+Validation Loss at Epoch 65: 0.007401151147851229
+Train Loss at Epoch 66: 1.0702211989274386e-08
+Validation Loss at Epoch 66: 0.007388830494216866
+Train Loss at Epoch 67: 1.5163647958101763e-08
+Validation Loss at Epoch 67: 0.007384314954570669
+Train Loss at Epoch 68: 1.483975172323289e-08
+Validation Loss at Epoch 68: 0.007369592226019067
+Train Loss at Epoch 69: 1.6978031955971874e-08
+Validation Loss at Epoch 69: 0.007366544795697728
+Train Loss at Epoch 70: 1.1055688425317553e-08
+Validation Loss at Epoch 70: 0.007356512272092111
+Train Loss at Epoch 71: 9.713814008838799e-09
+Validation Loss at Epoch 71: 0.007340225139535909
+Train Loss at Epoch 72: 2.086660113278248e-08
+Validation Loss at Epoch 72: 0.00733820731607808
+Train Loss at Epoch 73: 1.617728634116452e-08
+Validation Loss at Epoch 73: 0.00734415375541544
+Train Loss at Epoch 74: 1.640859003906449e-08
+Validation Loss at Epoch 74: 0.007326180211258903
+Train Loss at Epoch 75: 1.0537099215283851e-08
+Validation Loss at Epoch 75: 0.007330439846495586
+Train Loss at Epoch 76: 1.5291028642895674e-08
+Validation Loss at Epoch 76: 0.0073123397861982594
+Train Loss at Epoch 77: 1.9784555666994402e-08
+Validation Loss at Epoch 77: 0.007311801054090618
+Train Loss at Epoch 78: 1.1932350827650381e-08
+Validation Loss at Epoch 78: 0.007312157203637184
+Train Loss at Epoch 79: 2.080586992499456e-08
+Validation Loss at Epoch 79: 0.007297667992507584
+Train Loss at Epoch 80: 4.857840798446002e-09
+Validation Loss at Epoch 80: 0.007293848012113811
+Train Loss at Epoch 81: 7.251929611517472e-09
+Validation Loss at Epoch 81: 0.007299523300957028
+Train Loss at Epoch 82: 1.4160442609946527e-08
+Validation Loss at Epoch 82: 0.0072857516502175075
+Train Loss at Epoch 83: 1.8450146026017937e-08
+Validation Loss at Epoch 83: 0.007278662740187665
+Train Loss at Epoch 84: 5.178776227807735e-09
+Validation Loss at Epoch 84: 0.0072781359901457265
+Train Loss at Epoch 85: 1.982969215475928e-08
+Validation Loss at Epoch 85: 0.00728723979834931
+Train Loss at Epoch 86: 5.27005369738502e-09
+Validation Loss at Epoch 86: 0.0072762999256552495
+Train Loss at Epoch 87: 1.9131837357727908e-08
+Validation Loss at Epoch 87: 0.007279362816203621
+Train Loss at Epoch 88: 7.994821920716215e-09
+Validation Loss at Epoch 88: 0.007268649895978881
+Train Loss at Epoch 89: 1.0507400261079967e-08
+Validation Loss at Epoch 89: 0.007256365501935392
+Train Loss at Epoch 90: 1.9667569822579258e-08
+Validation Loss at Epoch 90: 0.007286329236186154
+Train Loss at Epoch 91: 8.583278070410998e-09
+Validation Loss at Epoch 91: 0.007247801288587445
+Train Loss at Epoch 92: 2.052210830915772e-08
+Validation Loss at Epoch 92: 0.007238835076864699
+Train Loss at Epoch 93: 1.0292061810119521e-08
+Validation Loss at Epoch 93: 0.0072372499204665305
+Train Loss at Epoch 94: 6.869843313877693e-09
+Validation Loss at Epoch 94: 0.007222912294544118
+Train Loss at Epoch 95: 1.1419600682492718e-08
+Validation Loss at Epoch 95: 0.0072198891089657906
+Train Loss at Epoch 96: 1.627881606651804e-08
+Validation Loss at Epoch 96: 0.007220795674397961
+Train Loss at Epoch 97: 1.524042568298216e-08
+Validation Loss at Epoch 97: 0.007205620024592694
+Train Loss at Epoch 98: 1.5444889048573397e-08
+Validation Loss at Epoch 98: 0.007211346338952627
+Train Loss at Epoch 99: 6.64290647650919e-09
+Validation Loss at Epoch 99: 0.007190318574489681
+Train Loss at Epoch 100: 1.0279117999752329e-08
+Validation Loss at Epoch 100: 0.00719726060583978
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Run Complete 
+
+
+Model Config: [{'name': 'CNN', 'structures': {'in_channels': 2, 'hidden_channels': [64, 64, 64, 64, 64, 64], 'out_channels': 2}, 'kernel_sizes': 3, 'strides': 1, 'paddings': 1, 'group': 1, 'dropouts': 0, 'activation_func': 'lrelu', 'bn': False}]
+Train Loss at Epoch 1: 1.2608334778942332e-07
+Validation Loss at Epoch 1: 0.061075335685157106
+Train Loss at Epoch 2: 6.580131156995985e-08
+Validation Loss at Epoch 2: 0.03728421437222726
+Train Loss at Epoch 3: 6.104741208128445e-08
+Validation Loss at Epoch 3: 0.028276092806183505
+Train Loss at Epoch 4: 3.646762615020544e-08
+Validation Loss at Epoch 4: 0.025052352703458004
+Train Loss at Epoch 5: 6.745643225557285e-08
+Validation Loss at Epoch 5: 0.022560614067672968
+Train Loss at Epoch 6: 4.3642340880962126e-08
+Validation Loss at Epoch 6: 0.021716316425402917
+Train Loss at Epoch 7: 6.93147684279141e-08
+Validation Loss at Epoch 7: 0.021293320877815793
+Train Loss at Epoch 8: 1.5533174771823185e-08
+Validation Loss at Epoch 8: 0.019160080809729422
+Train Loss at Epoch 9: 1.7382705142775966e-08
+Validation Loss at Epoch 9: 0.016961255821280406
+Train Loss at Epoch 10: 4.306534000910481e-08
+Validation Loss at Epoch 10: 0.017136879438947792
+Train Loss at Epoch 11: 6.096718911111859e-08
+Validation Loss at Epoch 11: 0.015565046098826944
+Train Loss at Epoch 12: 1.9928997399176762e-08
+Validation Loss at Epoch 12: 0.01577171013671089
+Train Loss at Epoch 13: 2.6358233428906874e-08
+Validation Loss at Epoch 13: 0.015061902746375883
+Train Loss at Epoch 14: 2.6063418858830754e-08
+Validation Loss at Epoch 14: 0.015076389379017336
+Train Loss at Epoch 15: 1.40963806157514e-08
+Validation Loss at Epoch 15: 0.014282287495270463
+Train Loss at Epoch 16: 2.472372819402658e-08
+Validation Loss at Epoch 16: 0.014010746511945763
+Train Loss at Epoch 17: 3.818767087336303e-08
+Validation Loss at Epoch 17: 0.013375813131818924
+Train Loss at Epoch 18: 1.7053774841860758e-08
+Validation Loss at Epoch 18: 0.012627917392416818
+Train Loss at Epoch 19: 2.806975888488385e-08
+Validation Loss at Epoch 19: 0.013016647180568733
+Train Loss at Epoch 20: 2.4091652678028328e-08
+Validation Loss at Epoch 20: 0.012932577609067946
+Train Loss at Epoch 21: 2.986590668189813e-08
+Validation Loss at Epoch 21: 0.011799387718658816
+Train Loss at Epoch 22: 2.2550975743441155e-08
+Validation Loss at Epoch 22: 0.012040297043710084
+Train Loss at Epoch 23: 2.994311407083499e-08
+Validation Loss at Epoch 23: 0.011672555136187519
+Train Loss at Epoch 24: 2.116239069108583e-08
+Validation Loss at Epoch 24: 0.011504740793856416
+Train Loss at Epoch 25: 1.4075920165267423e-08
+Validation Loss at Epoch 25: 0.011374215338677347
+Train Loss at Epoch 26: 1.2339566535293701e-08
+Validation Loss at Epoch 26: 0.011754892522259353
+Train Loss at Epoch 27: 2.3260713637708418e-08
+Validation Loss at Epoch 27: 0.010878890800366183
+Train Loss at Epoch 28: 1.274472171010927e-08
+Validation Loss at Epoch 28: 0.010619790338416472
+Train Loss at Epoch 29: 2.980843070926737e-08
+Validation Loss at Epoch 29: 0.010322420314804953
+Train Loss at Epoch 30: 3.129269467395461e-08
+Validation Loss at Epoch 30: 0.010242989516228328
+Train Loss at Epoch 31: 2.1284945033832664e-08
+Validation Loss at Epoch 31: 0.010704509327380046
+Train Loss at Epoch 32: 2.2279545308336836e-08
+Validation Loss at Epoch 32: 0.010004133919290475
+Train Loss at Epoch 33: 1.4588192865481454e-08
+Validation Loss at Epoch 33: 0.009885100115778738
+Train Loss at Epoch 34: 1.2358454913480968e-08
+Validation Loss at Epoch 34: 0.009776753222489271
+Train Loss at Epoch 35: 1.3476606048521257e-08
+Validation Loss at Epoch 35: 0.010133560411033573
+Train Loss at Epoch 36: 3.142290640090983e-08
+Validation Loss at Epoch 36: 0.009588050059664007
+Train Loss at Epoch 37: 1.249643117889029e-08
+Validation Loss at Epoch 37: 0.010436176486363151
+Train Loss at Epoch 38: 1.981225753623336e-08
+Validation Loss at Epoch 38: 0.009219894776989968
+Train Loss at Epoch 39: 1.3688445784599803e-08
+Validation Loss at Epoch 39: 0.009214462685047952
+Train Loss at Epoch 40: 9.140247850612421e-09
+Validation Loss at Epoch 40: 0.0091052064542602
+Train Loss at Epoch 41: 1.0680532545142675e-08
+Validation Loss at Epoch 41: 0.009312913431931295
+Train Loss at Epoch 42: 1.860211688974683e-08
+Validation Loss at Epoch 42: 0.009145063073783294
+Train Loss at Epoch 43: 1.6196327048265615e-08
+Validation Loss at Epoch 43: 0.010674418808873739
+Train Loss at Epoch 44: 1.8066963933644412e-08
+Validation Loss at Epoch 44: 0.008821338379570486
+Train Loss at Epoch 45: 2.57867212705201e-08
+Validation Loss at Epoch 45: 0.009763235021289196
+Train Loss at Epoch 46: 1.114551342199327e-08
+Validation Loss at Epoch 46: 0.00899969445498282
+Train Loss at Epoch 47: 7.2261015795747466e-09
+Validation Loss at Epoch 47: 0.008674029440104779
+Train Loss at Epoch 48: 1.182423305005549e-08
+Validation Loss at Epoch 48: 0.008467049467720096
+Train Loss at Epoch 49: 1.4001439489697795e-08
+Validation Loss at Epoch 49: 0.008532139156292055
+Train Loss at Epoch 50: 7.3847901036638374e-09
+Validation Loss at Epoch 50: 0.009011924123444827
+Train Loss at Epoch 51: 1.4244513668310646e-08
+Validation Loss at Epoch 51: 0.008311041952373711
+Train Loss at Epoch 52: 9.819641935851629e-09
+Validation Loss at Epoch 52: 0.009299854521029206
+Train Loss at Epoch 53: 1.77162510349016e-08
+Validation Loss at Epoch 53: 0.009979974900952517
+Train Loss at Epoch 54: 2.444148948131451e-08
+Validation Loss at Epoch 54: 0.008542270098718639
+Train Loss at Epoch 55: 1.2340027034770258e-08
+Validation Loss at Epoch 55: 0.008777819389178923
+Train Loss at Epoch 56: 1.5113964991881657e-08
+Validation Loss at Epoch 56: 0.008277637181411692
+Train Loss at Epoch 57: 2.1200414137302473e-08
+Validation Loss at Epoch 57: 0.008818287004806764
+Train Loss at Epoch 58: 1.0989880817098619e-08
+Validation Loss at Epoch 58: 0.008234309954052482
+Train Loss at Epoch 59: 1.804968518854535e-08
+Validation Loss at Epoch 59: 0.008282428976563866
+Train Loss at Epoch 60: 2.986299551958904e-08
+Validation Loss at Epoch 60: 0.008919095814431299
+Train Loss at Epoch 61: 1.1083759921322042e-08
+Validation Loss at Epoch 61: 0.008086673931704369
+Train Loss at Epoch 62: 1.483369376693075e-08
+Validation Loss at Epoch 62: 0.007908633910969331
+Train Loss at Epoch 63: 1.4258041011009017e-08
+Validation Loss at Epoch 63: 0.008073939998593864
+Train Loss at Epoch 64: 6.908638350596358e-09
+Validation Loss at Epoch 64: 0.008047350365692622
+Train Loss at Epoch 65: 1.697218015517341e-08
+Validation Loss at Epoch 65: 0.007703114369849762
+Train Loss at Epoch 66: 1.1021684960735966e-08
+Validation Loss at Epoch 66: 0.007891104944640353
+Train Loss at Epoch 67: 1.0221914717102593e-08
+Validation Loss at Epoch 67: 0.007680224142032255
+Train Loss at Epoch 68: 1.0327927623194864e-08
+Validation Loss at Epoch 68: 0.007536547585034859
+Train Loss at Epoch 69: 2.0237133896509595e-08
+Validation Loss at Epoch 69: 0.007697805611434895
+Train Loss at Epoch 70: 1.975431787478126e-08
+Validation Loss at Epoch 70: 0.007905715053077623
+Train Loss at Epoch 71: 1.3268166415152073e-08
+Validation Loss at Epoch 71: 0.007590263266290828
+Train Loss at Epoch 72: 1.5695456782801005e-08
+Validation Loss at Epoch 72: 0.0075064929884449015
+Train Loss at Epoch 73: 1.909301846683337e-08
+Validation Loss at Epoch 73: 0.0077970223154211786
+Train Loss at Epoch 74: 8.204359631029491e-09
+Validation Loss at Epoch 74: 0.007904557468510062
+Train Loss at Epoch 75: 1.6822394382829454e-08
+Validation Loss at Epoch 75: 0.007885159328820815
+Train Loss at Epoch 76: 6.71090572176651e-09
+Validation Loss at Epoch 76: 0.007456955933018448
+Train Loss at Epoch 77: 1.3787959994503317e-08
+Validation Loss at Epoch 77: 0.007602299675439554
+Train Loss at Epoch 78: 1.4507089641501302e-08
+Validation Loss at Epoch 78: 0.007438318489280664
+Train Loss at Epoch 79: 1.283733073210951e-08
+Validation Loss at Epoch 79: 0.007484246606852363
+Train Loss at Epoch 80: 9.146425009754026e-09
+Validation Loss at Epoch 80: 0.0074535123946772195
+Train Loss at Epoch 81: 1.0619603620741064e-08
+Validation Loss at Epoch 81: 0.007854805921545596
+Train Loss at Epoch 82: 1.0924682860556845e-08
+Validation Loss at Epoch 82: 0.0072980031065663755
+Train Loss at Epoch 83: 4.378515839969183e-09
+Validation Loss at Epoch 83: 0.0072787386142585874
+Train Loss at Epoch 84: 1.6250983311827013e-08
+Validation Loss at Epoch 84: 0.007152525357875948
+Train Loss at Epoch 85: 1.6612927192411145e-08
+Validation Loss at Epoch 85: 0.007368452520572362
+Train Loss at Epoch 86: 1.5438519035727326e-08
+Validation Loss at Epoch 86: 0.00781117014964604
+Train Loss at Epoch 87: 7.352634821275054e-09
+Validation Loss at Epoch 87: 0.007465175239766683
+Train Loss at Epoch 88: 8.104836441138385e-09
+Validation Loss at Epoch 88: 0.007193191786522535
+Train Loss at Epoch 89: 1.6688904921983538e-08
+Validation Loss at Epoch 89: 0.00729427937371763
+Train Loss at Epoch 90: 1.6718113637002506e-08
+Validation Loss at Epoch 90: 0.007086261755047595
+Train Loss at Epoch 91: 1.832788080063282e-08
+Validation Loss at Epoch 91: 0.007175300770601981
+Train Loss at Epoch 92: 8.197941211081389e-09
+Validation Loss at Epoch 92: 0.007019649758345659
+Train Loss at Epoch 93: 7.632931997959717e-09
+Validation Loss at Epoch 93: 0.007084483487944461
+Train Loss at Epoch 94: 1.6858437806668785e-08
+Validation Loss at Epoch 94: 0.007196919228436951
+Train Loss at Epoch 95: 9.86250490901204e-09
+Validation Loss at Epoch 95: 0.007471915308838554
+Train Loss at Epoch 96: 8.967697075601068e-09
+Validation Loss at Epoch 96: 0.007434969736391349
+Train Loss at Epoch 97: 1.5865976857008918e-08
+Validation Loss at Epoch 97: 0.006959823259001036
+Train Loss at Epoch 98: 8.903443767050613e-09
+Validation Loss at Epoch 98: 0.007139488249945
+Train Loss at Epoch 99: 5.034257490754781e-09
+Validation Loss at Epoch 99: 0.007126224633694182
+Train Loss at Epoch 100: 1.480490726620224e-08
+Validation Loss at Epoch 100: 0.0072182790838249715
+Train Loss at Epoch 101: 6.9393128232578734e-09
+Validation Loss at Epoch 101: 0.007564977888469661
+Train Loss at Epoch 102: 1.550520911504675e-08
+Validation Loss at Epoch 102: 0.007335979155808096
+Train Loss at Epoch 103: 1.006885398714524e-08
+Validation Loss at Epoch 103: 0.00689162263296447
+Train Loss at Epoch 104: 1.6503996383165947e-08
+Validation Loss at Epoch 104: 0.007172437439166053
+Train Loss at Epoch 105: 1.2416470950238907e-08
+Validation Loss at Epoch 105: 0.006931936122098064
+Train Loss at Epoch 106: 4.8345827980639715e-09
+Validation Loss at Epoch 106: 0.007199143883767724
+Train Loss at Epoch 107: 1.2127647294689732e-08
+Validation Loss at Epoch 107: 0.006911936136490816
+Train Loss at Epoch 108: 6.957687322052595e-09
+Validation Loss at Epoch 108: 0.006916791408233342
+Train Loss at Epoch 109: 2.075451361120757e-08
+Validation Loss at Epoch 109: 0.0069305920572569225
+Train Loss at Epoch 110: 5.931560669842848e-09
+Validation Loss at Epoch 110: 0.006515867735281957
+Train Loss at Epoch 111: 1.0466736554410138e-08
+Validation Loss at Epoch 111: 0.00652236231090015
+Train Loss at Epoch 112: 9.033092603961926e-09
+Validation Loss at Epoch 112: 0.006515552138321909
+Train Loss at Epoch 113: 8.563691038307241e-09
+Validation Loss at Epoch 113: 0.0065140501694264654
+Train Loss at Epoch 114: 1.9792104506246674e-08
+Validation Loss at Epoch 114: 0.006518480499775546
+Train Loss at Epoch 115: 1.2200223555415109e-08
+Validation Loss at Epoch 115: 0.006516443312736824
+Train Loss at Epoch 116: 2.0173603070833678e-08
+Validation Loss at Epoch 116: 0.0065056913658304875
+Train Loss at Epoch 117: 4.922186172028494e-09
+Validation Loss at Epoch 117: 0.006514854839225903
+Train Loss at Epoch 118: 9.786519389214077e-09
+Validation Loss at Epoch 118: 0.006506377431971903
+Train Loss at Epoch 119: 4.0165909439676456e-09
+Validation Loss at Epoch 119: 0.006512825465342735
+Train Loss at Epoch 120: 6.691630473690261e-09
+Validation Loss at Epoch 120: 0.006527682460617887
+Train Loss at Epoch 121: 6.20347500611625e-09
+Validation Loss at Epoch 121: 0.0064963066527436025
+Train Loss at Epoch 122: 5.75470775253503e-09
+Validation Loss at Epoch 122: 0.0065036121099171845
+Train Loss at Epoch 123: 5.317905431339486e-09
+Validation Loss at Epoch 123: 0.006512516368289339
+Train Loss at Epoch 124: 1.3184981819187208e-08
+Validation Loss at Epoch 124: 0.006503689621142979
+Train Loss at Epoch 125: 4.479654344327814e-09
+Validation Loss at Epoch 125: 0.0065018290762333415
+Train Loss at Epoch 126: 1.1142054745037447e-08
+Validation Loss at Epoch 126: 0.0064920923440293715
+Train Loss at Epoch 127: 1.2328855748924268e-08
+Validation Loss at Epoch 127: 0.006491515899555292
+Train Loss at Epoch 128: 5.552613340041461e-09
+Validation Loss at Epoch 128: 0.0064949132837633225
+Train Loss at Epoch 129: 6.472796853219513e-09
+Validation Loss at Epoch 129: 0.006496210262187389
+Train Loss at Epoch 130: 1.745285646562741e-08
+Validation Loss at Epoch 130: 0.006500982446805871
+Train Loss at Epoch 131: 7.69354077521374e-09
+Validation Loss at Epoch 131: 0.0064870530670848555
+Train Loss at Epoch 132: 1.3952246871638717e-08
+Validation Loss at Epoch 132: 0.006484757878917481
+Train Loss at Epoch 133: 3.513741714845526e-09
+Validation Loss at Epoch 133: 0.006516858613937711
+Train Loss at Epoch 134: 1.9683426003944843e-08
+Validation Loss at Epoch 134: 0.0064902486136672105
+Train Loss at Epoch 135: 1.4139265832873154e-08
+Validation Loss at Epoch 135: 0.006485643970018929
+Train Loss at Epoch 136: 1.1116648428693145e-08
+Validation Loss at Epoch 136: 0.006485678128854428
+Train Loss at Epoch 137: 8.160174217385853e-09
+Validation Loss at Epoch 137: 0.006481054983648053

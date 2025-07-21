@@ -1,13 +1,14 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import cat
-from .tools import paramToList, structureLoader, getAct, getModel, getLayers, getPool, getUpsample
+import torch
+from .tools import paramToList, structureLoader, getAct
 
-class UNetEncoderBlock(nn.Module):
+
+class CNN3D(nn.Module):
     """
-    Encoder Block for U-Net
+    Convolution layers with customisable hyperparameters.
     Args:
-        config (dict): A dictionary containing hyperparameters:\n 
+        config (dict): A dictionary containing hyperparameters:\n
             structure (dict): Structure of Model: (\n
                 in_channels (int): Size of input channels,\n
                 hidden_channels (list): Size of hidden channels,\n
@@ -17,37 +18,31 @@ class UNetEncoderBlock(nn.Module):
             paddings* (int or list): Width of padding\n
             group* (int or list): number of groups (must divide both in_channels and out_channels) (Set to 1 for default)\n
             dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n
-            activation_func (str): Name of desired activation function\n
-            pooling (dict): Pooling parameters: (\n
-                method (str): pooling method,\n
-                kernel_sizes (int): pooling kernel size,\n
-                strides (int): pooling strides)\n
-            bn (bool, optional): Whether to apply batch normalisation after convolution\n 
+            activation_func (str): Name of desired activation function\n 
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
     """
     def __init__(self, config):
         super().__init__()
         structure = structureLoader(config["structures"])
-        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
+        self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]    
+        kernel_sizes, strides, paddings, group = paramToList(config["kernel_sizes"], len(structure)-1), paramToList(config["strides"], len(structure)-1), paramToList(config["paddings"], len(structure)-1), paramToList(config["group"], len(structure)-1)
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
-
-        self.layers = getLayers(getModel(config, "CNN"))[0]
-        self.pool = getPool(config["pooling"])
-
+        self.layers = nn.ModuleList([nn.Conv3d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
+            
     def forward(self, x):
+        x = x.unsqueeze(1)
         for i, layer in enumerate(self.layers):
-            x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
-        return self.pool(x), x
-    
+            if i < len(self.layers) - 1:
+                x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
+        return layer(x).squeeze(1)
 
-
-class UNetDecoderBlock(nn.Module):
+class CNN3DSmart(nn.Module):
     """
-    Decoder Block for U-Net
+    Convolution layers with customisable hyperparameters.
     Args:
-        config (dict): A dictionary containing hyperparameters:\n 
-            structure (dict): Structure of model: (\n
+        config (dict): A dictionary containing hyperparameters:\n
+            structure (dict): Structure of Model: (\n
                 in_channels (int): Size of input channels,\n
                 hidden_channels (list): Size of hidden channels,\n
                 out_channels (int): Size of output channels)\n
@@ -56,12 +51,7 @@ class UNetDecoderBlock(nn.Module):
             paddings* (int or list): Width of padding\n
             group* (int or list): number of groups (must divide both in_channels and out_channels) (Set to 1 for default)\n
             dropouts* (int, float or list): Dropout probability for each layer (except the last) (Set to 0 for no dropout)\n
-            activation_func (str): Name of desired activation function\n
-            upsample (dict): Parameters of upsampling (equivalent to the pooling overation to reverse): (\n
-                method (str): Upsampling method,\n
-                kernel_sizes (int): Upsampling kernel size,\n
-                strides (int): Upsampling strides)\n
-            bn (bool, optional): Whether to apply batch normalisation after convolution\n
+            activation_func (str): Name of desired activation function\n 
     (*):\n If a float or int, applies the same value to all layers.\n
     \t If a list, must match the number of layers minus one.
     """
@@ -69,31 +59,23 @@ class UNetDecoderBlock(nn.Module):
         super().__init__()
         structure = structureLoader(config["structures"])
         self.act = getAct(config["activation_func"], structure[1:]) if config["activation_func"].lower() == "prelu" else [getAct(config["activation_func"]) for i in range(len(structure)-1)]
+        kernel_sizes, strides, paddings, group = paramToList(config["kernel_sizes"], len(structure)-1), paramToList(config["strides"], len(structure)-1), paramToList(config["paddings"], len(structure)-1), paramToList(config["group"], len(structure)-1)
         self.dropouts = paramToList(config["dropouts"], len(structure)-1)
-
-        self.upsample = getUpsample(structure[0], structure[0]//2, config["upsample"])
-        self.layers = getLayers(getModel(config, "CNN"))[0]
-
-    def forward(self, x, x1):
-        x=self.upsample(x)
-        dY, dX = x1.size()[2]-x.size()[2], x1.size()[3]-x.size()[3] # Match dimension of input
-        x = F.pad(x, [dX//2, dX-dX//2, dY//2, dY-dY//2])
-        x = cat((x,x1), dim=1)
-
+        self.layers = nn.ModuleList([nn.Conv3d(structure[i], structure[i+1], kernel_size=kernel_sizes[i], stride=strides[i], padding=paddings[i], groups=group[i]) for i in range(len(structure)-1)])
+            
+    def forward(self, x):
+        x = torch.stack([x[:, 0], torch.zeros_like(x[:, 0]), x[:, 1]], dim=1)
+        x = x.unsqueeze(1)
         for i, layer in enumerate(self.layers):
-            x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
-        return x
-
-
+            if i < len(self.layers) - 1:
+                x = F.dropout(self.act[i](layer(x)), p=self.dropouts[i], training=self.training)
+        out = layer(x).squeeze(1)
+        return torch.stack([out[:, 0], out[:, 2]], dim= 1)
 
 
 if __name__ == "__main__":
     import json
-    with open("src/models/configs/uNetEncoderBlock1.json", "r") as f:
+    with open("src/models/configs/cnn1.json", "r") as f:
         config = json.load(f)
-        unet = UNetEncoderBlock(config[0])
-        print(unet)
-
-
-
-
+        cnn = CNN3D(config[0])
+        print(cnn)

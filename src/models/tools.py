@@ -1,3 +1,6 @@
+import torch
+from functools import partial
+
 def paramToList(param, dimension):
         '''
         Check and convert hyperparameters into lists
@@ -34,7 +37,7 @@ def structureLoader(structure):
         raise TypeError("Structure has to be a dictionary with 3 entries")
 
 
-def getAct(name):
+def getAct(name, structure=None):
     """
     Load activation functions
     Args:
@@ -43,15 +46,36 @@ def getAct(name):
         The corresponding activation function
     """
     if name.lower() == "relu":
-        from torch.nn.functional import relu_
-        return relu_
+        return torch.relu_
     elif name.lower() == "selu":
-        from torch.nn.functional import selu_
-        return selu_
+        return torch.selu_
     elif name.lower() == "gelu":
-        from torch.nn.functional import gelu
-        return gelu
+        return torch.nn.functional.gelu
     elif name.lower() == "lrelu":
+        return torch.nn.functional.leaky_relu_
+    elif name.lower() == "prelu":
+        return torch.nn.ModuleList([torch.nn.PReLU(i) for i in structure])
+    elif name.lower() == "elu":
+        return torch.nn.functional.elu_
+    elif name.lower() == "celu":
+        return torch.celu_
+    elif name.lower() == "softsign":
+        return torch.nn.functional.softsign
+    elif name.lower() == "tanshrink":
+        return torch.nn.functional.tanhshrink
+    elif name.lower() == "identity":
+        return lambda x: x
+    elif name.lower() == "tanh":
+        return torch.tanh
+    elif name.lower() == "sigmoid":
+        return torch.sigmoid
+    elif name.lower() == "shifted_sigmoid":
+        @torch.compile
+        def shifted_sigmoid(x:torch.Tensor):
+            return 2*torch.sigmoid_(x) - 1
+        return shifted_sigmoid
+    elif name.lower() == "img_softmax":
+        return partial(torch.softmax, dim=1)
         from torch.nn.functional import leaky_relu_
         return leaky_relu_
     elif name.lower() == "rrelu":
@@ -61,7 +85,7 @@ def getAct(name):
         from torch.nn.functional import silu
         return silu
     else:
-        raise ValueError(f"Activation function [{name}] does not exist")
+        raise ValueError(f"Activation function [{name}] not defined")
 
 
 def getPool(config):
@@ -123,14 +147,29 @@ def getModel(config, name=None):
         from .FastKAN import FastKAN
         return FastKAN(config)
     elif name == "SMARTCONV":
-        from .SmartCNN import SmartCNN, SmartCNNBN
-        if config["bn"]:
-            return SmartCNNBN(config)
-        else:
-            return SmartCNN(config)
+        from .SmartCNN import SmartCNN
+        return SmartCNN(config)
     elif name == "BCAT":
         from .BCAT import BCAT
         return BCAT(config, 64, 2)
+    elif name == "CHANNELAWARE":
+        from .ChannelAwareCNN import ChannelAwareCNN
+        return ChannelAwareCNN(config)
+    elif name == "3DCNN":
+        from .CNN3D import CNN3D
+        return CNN3D(config)
+    elif name == "3DCNNSMART":
+        from .CNN3D import CNN3DSmart
+        return CNN3DSmart(config)
+    elif name == "FCNHEAD":
+        from .FCN import FCNHead
+        return FCNHead(config)
+    elif name == "PRELUCNN":
+        from .CNN import PreluCNN
+        return PreluCNN(config)
+    elif name == "FC":
+        from .MLP import FC
+        return FC(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
 
@@ -144,3 +183,31 @@ def getLayers(model):
     Return: a dictionary of the layers in the model
     '''
     return list(model.children())
+
+
+def getUpsample(in_channels, out_channels, config):
+    '''
+    Fetch upsampling methods
+    Args:
+        in_channels (int): Size of input channels,\n
+        out_channels (int): Size of output channels,\n
+        config (dict): Upsampling configuration: (\n
+            method (str): Upsampling method,\n
+            kernel_sizes (int): Upsampling kernel size,\n
+            strides (int): Upsampling strides)\n
+    Return: upsampling layers
+    '''
+    if config["method"].lower() == "bilinear":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["strides"], mode="bilinear", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    elif config["method"].lower() == "convtranspose" or config["method"].lower() == "convt":
+        from torch.nn import ConvTranspose2d
+        return ConvTranspose2d(in_channels, out_channels, kernel_size=config["kernel_sizes"], stride=config["strides"])
+    elif config["method"].lower() == "nearest":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["strides"], mode="nearest", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    elif config["method"].lower() == "bicubic":
+        from torch.nn import Sequential, Conv2d, Upsample
+        return Sequential(Upsample(scale_factor=config["strides"], mode="bicubic", align_corners=True), Conv2d(in_channels, out_channels, kernel_size=1))
+    else:
+        raise ValueError(f"Model Name not defined")

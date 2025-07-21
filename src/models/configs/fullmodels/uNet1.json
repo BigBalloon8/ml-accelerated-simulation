@@ -16,7 +16,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": false
 },
 {
     "name": "UNetEncoderBlock",
@@ -35,7 +36,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": false
 },
 {
     "name": "UNetEncoderBlock",
@@ -54,7 +56,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": false
 },
 {
     "name": "UNetEncoderBlock",
@@ -73,7 +76,8 @@
         "method": "max",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": false
 },
 {
     "name": "CNN",
@@ -87,7 +91,8 @@
     "paddings": 1,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "relu",
+    "bn": false
 },
 {
     "name": "UNetDecoderBlock",
@@ -102,11 +107,12 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
-        "method": "max",
+    "upsample": {
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": false
 },
 {
     "name": "UNetDecoderBlock",
@@ -121,11 +127,12 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
-        "method": "max",
+    "upsample": {
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": false
 },
 {
     "name": "UNetDecoderBlock",
@@ -140,11 +147,12 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
-        "method": "max",
+    "upsample": {
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": false
 },
 {
     "name": "UNetDecoderBlock",
@@ -159,11 +167,12 @@
     "group": 1,
     "dropouts": 0,
     "activation_func": "relu",
-    "pooling": {
-        "method": "max",
+    "upsample": {
+        "method": "convt",
         "kernel_sizes": 2,
         "strides": 2
-    }
+    },
+    "bn": false
 },
 {
     "name": "CNN",
@@ -176,6 +185,7 @@
     "paddings": 0,
     "group": 1,
     "dropouts": 0,
-    "activation_func": "relu"
+    "activation_func": "relu",
+    "bn": false
 }
 ]
