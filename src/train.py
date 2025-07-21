@@ -93,7 +93,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 pred = model.forward(coarse)
                 loss = criterion.forward(pred, dif)
                 loss.backward()
-                total_loss += loss.item()*batchsize
+                total_loss += loss.item()
                 #if (i+1)%gradient_accumulation_steps==0:
                 opt.step()
                 opt.zero_grad()

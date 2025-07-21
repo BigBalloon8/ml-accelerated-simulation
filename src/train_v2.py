@@ -121,7 +121,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 loss.backward()
                 total_loss += loss.item()
                 #if (i+1)%gradient_accumulation_steps==0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+                #torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                 opt.step()
                 opt.zero_grad()
                 pbar.update(local_batch_size)
