@@ -87,6 +87,58 @@ def downsample_staggered_velocity(
         result.append(downsample(u, j, round(factor)))
     return grids.GridVariableVector(tuple(result))
 
+def downsample_tensor(x):
+    def block_reduce(array, block_size, reduction_fn):
+        new_shape = []
+        for b, s in zip(block_size, array.shape):
+            multiple, residual = divmod(s, b)
+            if residual != 0:
+                raise ValueError('`block_size` must divide `array.shape`;'
+                                f'got {block_size}, {array.shape}.')
+            new_shape += [multiple, b]
+        multiple_axis_reduction_fn = reduction_fn
+        for j in reversed(range(array.ndim)):
+            multiple_axis_reduction_fn = torch.vmap(multiple_axis_reduction_fn, j)
+        return multiple_axis_reduction_fn(array.reshape(new_shape))
+
+    def _normalize_axis(axis: int, ndim: int) -> int:
+        if not -ndim <= axis < ndim:
+            raise ValueError(f"invalid axis {axis} for ndim {ndim}")
+        if axis < 0:
+            axis += ndim
+        return axis
+
+    def slice_along_axis(
+        inputs, axis: int, idx, expect_same_dims: bool = True):
+
+        arrays, tree_def = pytree.tree_flatten(inputs)
+        ndims = set(a.ndim for a in arrays)
+        if expect_same_dims and len(ndims) != 1:
+            raise ValueError(
+                "arrays in `inputs` expected to have same ndims, but have "
+                f"{ndims}. To allow this, pass expect_same_dims=False"
+            )
+        sliced = []
+        for array in arrays:
+            ndim = array.ndim
+            slc = tuple(
+                idx if j == _normalize_axis(axis, ndim) else slice(None)
+                for j in range(ndim)
+            )
+            sliced.append(array[slc])
+        return pytree.tree_unflatten(sliced, tree_def)
+
+    def downsample_staggered_velocity_component(u, direction: int, factor: int=16):
+        w = slice_along_axis(u, direction, slice(factor - 1, None, factor))
+        block_size = tuple(1 if j == direction else factor for j in range(u.ndim))
+        return block_reduce(w, block_size, torch.mean)
+
+    factor = round(1024//64)
+    result = []
+    for j, u in enumerate(x):
+        result.append(downsample_staggered_velocity_component(u, j, factor=factor))
+    return torch.stack(result)
+
 def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
     return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
@@ -148,8 +200,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     coarse_step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
     LC_coarse_step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
 
-
-
     full_grid = grids.Grid((high_res, high_res), domain=((0, diam), (0, diam)), device=device)
     coarse_grid = grids.Grid((low_res, low_res), domain=((0, diam), (0, diam)), device=device)
     LC_coarse_grid = grids.Grid((low_res, low_res), domain=((0, diam), (0, diam)), device=device)
@@ -165,6 +215,9 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     v0_full = filtered_velocity_field(
         full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
         device=device, batch_size=1)
+
+    print(torch.stack(v0_full.data).shape)
+    print(torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(torch.stack(v0_full.data)).shape)
 
     v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
     v0_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v0_full)
@@ -185,7 +238,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         density=density,
         drag=0.1,
         forcing=forcing_fn_full,
-        solver=step_fn,
+        solver=full_step_fn,
         # set_laplacian=False,
     ).to(v0_full.device)
 
@@ -218,8 +271,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         seg_model = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
         seg_model.to(device)
 
-    error_fn = nn.MSELoss()
-
     mask_stream = torch.cuda.Stream()
     model_stream = torch.cuda.Stream()
 
@@ -229,17 +280,20 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
 
     MAE = nn.L1Loss()
 
-    control_errors = []
-    LC_errors = []
+    control_errors = [0.0]
+    LC_errors = [0.0]
 
     for i in range(64):
         for i in range(16):
-            v_full = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+            v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
         
-        v_coarse = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
+        v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
 
-        v_LC_coarse = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
-        coarse = v_LC_coarse.data.squeeze(1)
+        v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
+        coarse = torch.stack(v_LC_coarse.data).squeeze(1)
+        input_scale = 7
+        output_scale = 0.004482923474868822
+        coarse /= input_scale
         if not no_segment:
             with torch.cuda.stream(mask_stream):
                 mask = get_mask(coarse, seg_model)
@@ -250,11 +304,13 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             coarse += delta_v
         else:
             delta_v = model.forward(coarse)
-            coarse += delta_v
+            coarse += delta_v*output_scale
         v_LC_coarse.data = coarse.unsqeeze(1)
-
-        control_errors.append(MAE(v_full.data, v_coarse.data).item())
-        LC_errors.append(MAE(v_full.data, coarse).item())
+        coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(torch.stack(v_full.data))
+        control_errors.append(MAE(coarsened_full, torch.stack(v_coarse.data)).item())
+        LC_errors.append(MAE(coarsened_full, coarse).item())
+        logger.log(f"Control Error: {control_errors[-1]}")
+        logger.log(f"LC Error: {LC_errors[-1]}")
 
 
 
