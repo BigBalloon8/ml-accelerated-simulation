@@ -80,7 +80,7 @@ Example of training baseline model
 ```bash
 cd ml-accelerated-simulation/src 
 python train_v2.py --data_path ../../dataset --model_type BASELINE \
-                   --model_config model/configs/fullmodels/baselines/MLACFD.json \
+                   --model_config models/configs/fullmodels/baselines/MLACFD.json \
                    --checkpoint_path /content/drive/MyDrive/checkpoints \ 
                    --log_file /content/drive/MyDrive/logs/baseline.log
 ```
@@ -89,7 +89,7 @@ Example of training U-Net
 ```
 cd ml-accelerated-simulation/src 
 python train_v2.py --data_path ../../dataset --model_type UNET \
-                   --model_config model/configs/fullmodels/uNet1.json \
+                   --model_config models/configs/fullmodels/uNet1.json \
                    --checkpoint_path /content/drive/MyDrive/checkpoints \ 
                    --log_file /content/drive/MyDrive/logs/unet.log
 ```
@@ -97,7 +97,7 @@ python train_v2.py --data_path ../../dataset --model_type UNET \
 ## Inference Testing
 ```bash
 python inference_testing.py --model_type BASELINE \
-                   --model_config model/configs/fullmodels/baselines/MLACFD.json \
+                   --model_config models/configs/fullmodels/baselines/MLACFD.json \
                    --checkpoint_path /content/drive/MyDrive/checkpoints \ 
                    --log_file /content/drive/MyDrive/logs/baseline.log
 ```

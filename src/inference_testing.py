@@ -24,6 +24,8 @@ from functools import partial
 from models import buildModel
 from log import Logger
 
+import matplotlib.pyplot as plt
+
 def block_reduce(array, block_size, reduction_fn):
     new_shape = []
     for b, s in zip(block_size, array.shape):
@@ -143,26 +145,21 @@ def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
     return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
 
-def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[nn.Module, dict]:
+def get_model(name:str, config_file, checkpoint_path, logger)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
         config = json.load(f)
     logger.log(f"Model Config: {config}")
 
     model_base = buildModel(config)
     
-    if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
+    if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path):
         print(f"Model Found in {checkpoint_path}: {name}_{hash_dict(config)}.safetensors")
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
-        opt_path = os.path.join(checkpoint_path, f"{name}_ADAM_{hash_dict(config)}.pt")
         model_weights = st.load_file(model_path)
-        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.json"), "r") as f:
-            metadata = json.load(f)
         model_base.load_state_dict(model_weights)
-        opt_state = torch.load(opt_path)
     else:
-        metadata = {"last_epoch":-1}
-        opt_state = None
-    return model_base, metadata, opt_state
+        raise FileNotFoundError("Model not found")
+    return model_base
 
 def get_segment_model(name, config_file, checkpoint_path):
     with open(config_file, "r") as f:
@@ -178,6 +175,26 @@ def get_mask(x, segment_model):
     with torch.no_grad():
         logits = torch.softmax(segment_model(x), dim=1)
         return torch.argmax(logits, dim=1, keepdim=True).to(torch.bool)
+
+def graph_vec_field(x, file):
+    Ux = x[0].cpu().numpy()
+    Uy = x[1].cpu().numpy()
+    import numpy as np
+    X, Y = np.meshgrid(np.arange(Ux.shape[1]), np.arange(Ux.shape[0]))
+    fig, ax = plt.subplots(figsize=(6, 6))
+
+    mag = np.sqrt(Ux**2 + Uy**2)
+    im = ax.imshow(mag, cmap='viridis', origin='lower')
+    plt.colorbar(im, ax=ax, label='Magnitude')
+
+    ax.quiver(X, Y, Ux, Uy, color='w',)  # adjust scale for visual clarity
+    ax.set_aspect('equal')
+    ax.set_title('Vector Field (quiver)')
+
+    plt.savefig(file)
+
+def get_grid_data(x):
+    return torch.stack(x.data)
 
 def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_model_name, seg_model_config):
     # ---------- Simulation Setup ---------------
@@ -215,9 +232,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     v0_full = filtered_velocity_field(
         full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
         device=device, batch_size=1)
-
-    print(torch.stack(v0_full.data).shape)
-    print(torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(torch.stack(v0_full.data)).shape)
 
     v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
     v0_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v0_full)
@@ -265,7 +279,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     ).to(LC_coarse_grid.device)
 
     #-----------ML setup------------------
-    model, _ = get_model(model_type, model_config, checkpoint_path)
+    model = get_model(model_type, model_config, checkpoint_path, logger)
     model.to(device)
     if not no_segment:
         seg_model = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
@@ -275,6 +289,15 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     model_stream = torch.cuda.Stream()
 
     v_full = v0_full
+
+    # Warmup
+    for i in tqdm(range(1024), desc="Warmup"):
+        v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+    
+    #Actual Run
+    v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
+    v0_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v0_full)
+
     v_coarse = v0_coarse
     v_LC_coarse = v0_LC_coarse
 
@@ -282,7 +305,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
 
     control_errors = [0.0]
     LC_errors = [0.0]
-
+    
     for i in range(64):
         for i in range(16):
             v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
@@ -290,7 +313,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
 
         v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
-        coarse = torch.stack(v_LC_coarse.data).squeeze(1)
+        coarse = get_grid_data(v_LC_coarse).squeeze(1)
         input_scale = 7
         output_scale = 0.004482923474868822
         coarse /= input_scale
@@ -305,14 +328,20 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         else:
             delta_v = model.forward(coarse)
             coarse += delta_v*output_scale
-        v_LC_coarse.data = coarse.unsqeeze(1)
-        coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(torch.stack(v_full.data))
-        control_errors.append(MAE(coarsened_full, torch.stack(v_coarse.data)).item())
+        v_LC_coarse.data = coarse.unsqueeze(1)
+        coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full))
+        control_errors.append(MAE(coarsened_full, get_grid_data(v_coarse)).item())
         LC_errors.append(MAE(coarsened_full, coarse).item())
         logger.log(f"Control Error: {control_errors[-1]}")
         logger.log(f"LC Error: {LC_errors[-1]}")
 
+    graph_vec_field(get_grid_data(coarsened_full).squeeze(), "full.png")
+    graph_vec_field(get_grid_data(get_grid_data(v_coarse)).squeeze(), "coarse.png")
+    graph_vec_field(get_grid_data(coarse).squeeze(), "LC.png")
 
+
+    
+    
 
 
 
