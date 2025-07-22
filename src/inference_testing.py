@@ -196,6 +196,11 @@ def graph_vec_field(x, file):
 def get_grid_data(x):
     return torch.stack(x.data)
 
+def tensor_to_grid(x, grid, grid_variable_vector):
+    grid_array_0 = grids.GridVariable(x[0].squeeze(), offset=grid_variable_vector[0].offset, grid=grid, bc=grid_variable_vector[0].bc)
+    grid_array_1 = grids.GridVariable(x[1].squeeze(), offset=grid_variable_vector[1].offset, grid=grid, bc=grid_variable_vector[1].bc)
+    return grids.GridVariableVector((grid_array_0, grid_array_1))
+
 def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_model_name, seg_model_config):
     # ---------- Simulation Setup ---------------
     high_res = 1024
@@ -295,11 +300,8 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
     
     #Actual Run
-    v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
-    v0_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v0_full)
-
-    v_coarse = v0_coarse
-    v_LC_coarse = v0_LC_coarse
+    v_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v_full)
+    v_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v_full)
 
     MAE = nn.L1Loss()
 
@@ -316,36 +318,27 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         coarse = get_grid_data(v_LC_coarse).squeeze(1)
         input_scale = 7
         output_scale = 0.004482923474868822
-        coarse /= input_scale
+        coarse_norm = coarse / input_scale
         if not no_segment:
             with torch.cuda.stream(mask_stream):
-                mask = get_mask(coarse, seg_model)
+                mask = get_mask(coarse_norm, seg_model)
             with torch.cuda.stream(model_stream):
-                delta_v = model.forward(coarse)
+                delta_v = model.forward(coarse_norm)
             torch.cuda.synchronize()
             delta_v = delta_v.masked_fill(mask, 0)
-            coarse += delta_v
         else:
-            delta_v = model.forward(coarse)
-            coarse += delta_v*output_scale
-        v_LC_coarse.data = coarse.unsqueeze(1)
-        coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full))
+            delta_v = model.forward(coarse_norm)
+        coarse += delta_v*output_scale
+        v_LC_coarse = tensor_to_grid(coarse.unsqueeze(1), LC_coarse_grid, v_LC_coarse)
+        coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
         control_errors.append(MAE(coarsened_full, get_grid_data(v_coarse)).item())
         LC_errors.append(MAE(coarsened_full, coarse).item())
         logger.log(f"Control Error: {control_errors[-1]}")
         logger.log(f"LC Error: {LC_errors[-1]}")
-
-    graph_vec_field(get_grid_data(coarsened_full).squeeze(), "full.png")
-    graph_vec_field(get_grid_data(get_grid_data(v_coarse)).squeeze(), "coarse.png")
-    graph_vec_field(get_grid_data(coarse).squeeze(), "LC.png")
-
-
     
-    
-
-
-
-
+    graph_vec_field(coarsened_full.squeeze(), "full.png")
+    graph_vec_field(get_grid_data(v_coarse).squeeze(), "coarse.png")
+    graph_vec_field(coarse.squeeze(), "LC.png")
 
 
 
