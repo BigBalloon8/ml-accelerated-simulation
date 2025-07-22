@@ -214,7 +214,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
     diam = 2 * torch.pi
-    simulation_time = 30
     logger = Logger(model_type, log_file)
 
 
@@ -232,6 +231,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         max_courant_number=cfl_safety_factor,
         viscosity=viscosity,
     )
+    print(f"Timestep: {full_dt}")
     coarse_dt = full_dt*16
 
     v0_full = filtered_velocity_field(
@@ -296,7 +296,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     v_full = v0_full
 
     # Warmup
-    for i in tqdm(range(1024), desc="Warmup"):
+    for i in tqdm(range(int(1024)), desc="Warmup"):
         v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
     
     #Actual Run
@@ -308,14 +308,14 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     control_errors = [0.0]
     LC_errors = [0.0]
     
-    for i in range(64):
-        for i in range(16):
+    for i in range(int(1/coarse_dt)):
+        for j in range(16):
             v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
         
         v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
 
         v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
-        coarse = get_grid_data(v_LC_coarse).squeeze(1)
+        coarse = get_grid_data(v_LC_coarse).squeeze(1).unsqueeze(0)
         input_scale = 7
         output_scale = 0.004482923474868822
         coarse_norm = coarse / input_scale
@@ -328,13 +328,17 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             delta_v = delta_v.masked_fill(mask, 0)
         else:
             delta_v = model.forward(coarse_norm)
+        # graph_vec_field(delta_v.squeeze(), "delta_v.png")
+        # input()
         coarse += delta_v*output_scale
-        v_LC_coarse = tensor_to_grid(coarse.unsqueeze(1), LC_coarse_grid, v_LC_coarse)
+        coarse = coarse.squeeze_()
+        v_LC_coarse = tensor_to_grid(coarse.squeeze().unsqueeze(1), LC_coarse_grid, v_LC_coarse)
         coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
         control_errors.append(MAE(coarsened_full, get_grid_data(v_coarse)).item())
         LC_errors.append(MAE(coarsened_full, coarse).item())
-        logger.log(f"Control Error: {control_errors[-1]}")
-        logger.log(f"LC Error: {LC_errors[-1]}")
+        if i % 64 == 0:
+            logger.log(f"Control Error: {control_errors[-1]}")
+            logger.log(f"LC Error: {LC_errors[-1]}")
     
     graph_vec_field(coarsened_full.squeeze(), "full.png")
     graph_vec_field(get_grid_data(v_coarse).squeeze(), "coarse.png")
