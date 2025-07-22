@@ -174,7 +174,7 @@ def get_segment_model(name, config_file, checkpoint_path):
 def get_mask(x, segment_model):
     with torch.no_grad():
         logits = torch.softmax(segment_model(x), dim=1)
-        return torch.argmax(logits, dim=1, keepdim=True).to(torch.bool)
+        return ~(torch.argmax(logits, dim=1, keepdim=True).to(torch.bool))
 
 def graph_vec_field(x, file):
     Ux = x[0].cpu().numpy()
