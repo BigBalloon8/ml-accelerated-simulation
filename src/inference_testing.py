@@ -314,7 +314,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
 
     control_errors = [0.0]
     LC_errors = [0.0]
-    
+    torch.cuda.synchronize()
     for i in range(int(1/coarse_dt)):
         with torch.cuda.stream(full_stream):
             for _ in range(16):
