@@ -189,7 +189,7 @@ def graph_vec_field(x, file):
 
     ax.quiver(X, Y, Ux, Uy, color='w',)  # adjust scale for visual clarity
     ax.set_aspect('equal')
-    ax.set_title('Vector Field (quiver)')
+    ax.set_title(file.split(".")[0])
 
     plt.savefig(file)
 
@@ -289,9 +289,16 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     if not no_segment:
         seg_model = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
         seg_model.to(device)
+    
+    input_scale = 7
+    output_scale = 0.004482923474868822
 
     mask_stream = torch.cuda.Stream()
     model_stream = torch.cuda.Stream()
+
+    full_stream = torch.cuda.Stream()
+    coarse_stream = torch.cuda.Stream()
+    LC_stream = torch.cuda.Stream()
 
     v_full = v0_full
 
@@ -309,27 +316,30 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     LC_errors = [0.0]
     
     for i in range(int(1/coarse_dt)):
-        for j in range(16):
-            v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+        with torch.cuda.stream(full_stream):
+            for _ in range(16):
+                v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
         
-        v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
+        with torch.cuda.stream(coarse_stream):
+            v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
+        
+        with torch.cuda.stream(LC_stream):
+            v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
+            coarse = get_grid_data(v_LC_coarse).squeeze(1).unsqueeze(0)
+            coarse_norm = coarse / input_scale
 
-        v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
-        coarse = get_grid_data(v_LC_coarse).squeeze(1).unsqueeze(0)
-        input_scale = 7
-        output_scale = 0.004482923474868822
-        coarse_norm = coarse / input_scale
+        with torch.cuda.stream(model_stream):
+            torch.cuda.current_stream().wait_stream(LC_stream)
+            delta_v = model.forward(coarse_norm)
+
         if not no_segment:
             with torch.cuda.stream(mask_stream):
+                torch.cuda.current_stream().wait_stream(LC_stream)
                 mask = get_mask(coarse_norm, seg_model)
-            with torch.cuda.stream(model_stream):
-                delta_v = model.forward(coarse_norm)
-            torch.cuda.synchronize()
-            delta_v = delta_v.masked_fill(mask, 0)
-        else:
-            delta_v = model.forward(coarse_norm)
-        # graph_vec_field(delta_v.squeeze(), "delta_v.png")
-        # input()
+                torch.cuda.current_stream().wait_stream(model_stream)
+                delta_v = delta_v.masked_fill(mask, 0)
+
+        torch.cuda.synchronize()
         coarse += delta_v*output_scale
         coarse = coarse.squeeze_()
         v_LC_coarse = tensor_to_grid(coarse.squeeze().unsqueeze(1), LC_coarse_grid, v_LC_coarse)
