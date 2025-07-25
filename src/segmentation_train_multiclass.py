@@ -37,7 +37,7 @@ def get_dif_label(dif, classes:list, mode=None):
     elif mode == "scheduling":
         for i in range(len(percentiles)):
             labels.append((torch.norm(dif, dim=1)>percentiles[i]).to(torch.int64))
-    return torch.sum(torch.tensor(labels, dtype=torch.int64)) if mode is None else torch.tensor(labels, dtype=torch.int64)
+    return torch.sum(torch.stack(labels), dim=0) if mode is None else torch.stack(labels)
 
 
 
