@@ -19,7 +19,7 @@ from log import Logger
 
 
 def get_dif_label(dif, classes:list, mode=None):
-    with open("src/data/data_percentiles.json", "r") as f:
+    with open("data/data_percentiles.json", "r") as f:
         data = json.load(f)
     percentages, vals = data["percentiles"]["percentages"], data["percentiles"]["values"] 
     classes = [66.7 if round(i)==66 or round(i)==67 else float(i) for i in classes] #correct values for extraction from list
