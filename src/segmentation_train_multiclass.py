@@ -17,7 +17,6 @@ from data.dataloader import get_kolomogrov_flow_data_loader
 from models import buildModel
 from log import Logger
 
-import numpy as np
 
 def get_dif_label(dif, classes:list, mode=None):
     with open("src/data/data_percentiles.json", "r") as f:
@@ -95,6 +94,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     batchsize = 32
     gradient_accumulation_steps = 1
     local_batch_size = batchsize // gradient_accumulation_steps
+    percentiles = [33.3, 66.7]
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -119,7 +119,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                dif_labels = get_dif_label(dif, [66.])
+                dif_labels = get_dif_label(dif, percentiles)
                 logits = model.forward(coarse)
                 loss = criterion(logits, dif_labels).mean()
                 loss.backward()
@@ -139,7 +139,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    dif_labels = get_dif_label(dif, [66.])
+                    dif_labels = get_dif_label(dif, percentiles)
                     logits = model.forward(coarse)
                     loss = criterion(logits, dif_labels).mean()
                     total_loss += loss.item()
