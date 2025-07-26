@@ -65,9 +65,9 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
 
 
 def get_mask(x, segment_model):
-    with torch.no_grad():
-        logits = torch.softmax(segment_model(x), dim=1)
-        return torch.argmax(logits, dim=1, keepdim=True).to(torch.bool)
+
+    logits = torch.softmax(segment_model(x), dim=1)
+    return torch.argmax(logits, dim=1, keepdim=True).to(torch.bool)
     
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config):
     torch.set_default_dtype(torch.float64)
@@ -88,14 +88,17 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
 
-    seg_model = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
+    seg_model, _, seg_opt_state = get_model(seg_model_name, seg_model_config, checkpoint_path, logger, new_run)
     seg_model.to(device)
 
     criterion = nn.MSELoss()
 
     opt = torch.optim.Adam(model.parameters())
+    seg_opt = torch.optim.Adam(seg_model.parameters())
     if opt_state is not None:
         opt.load_state_dict(opt_state)
+    if seg_opt_state is not None:
+        seg_opt.load_state_dict(seg_opt_state)
     
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, patience=5)
 
@@ -124,6 +127,8 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 #torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
                 opt.step()
                 opt.zero_grad()
+                seg_opt.step()
+                seg_opt.zero_grad()
                 pbar.update(local_batch_size)
                 pbar.set_description(f"Epoch {e+1} Loss: {loss.item():.8f}")
         logger.log(f"Train Loss at Epoch {e+1}: {total_loss/(len(train_dataloader))}")
@@ -150,6 +155,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    
+        save_model(seg_model, seg_opt, seg_model_name, checkpoint_path, seg_model_config, {"last_epoch":e})    
 
         
 
