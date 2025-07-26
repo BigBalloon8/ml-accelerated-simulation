@@ -77,6 +77,15 @@ class KolmogrovFlowData(Dataset):
         dif = c_full - coarse
         max_velocity = 7
         coarse /= max_velocity
+        dif_mag_std = 0.004482923474868822
+        dif /= dif_mag_std
+
+        # dif = c_full - coarse
+        # velocity_mag_std = 0.7189806458297757
+        # coarse /= velocity_mag_std
+        # dif_mag_std = 0.004482923474868822
+        # dif /= dif_mag_std
+
         return coarse, dif
 
 

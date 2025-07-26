@@ -75,7 +75,6 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     model = model.to(device)
 
     criterion = nn.MSELoss()
-    val_criterion = nn.MSELoss(reduction="sum")
 
     opt = torch.optim.Adam(model.parameters(), weight_decay=1e-4, amsgrad=True)
     if opt_state is not None:
@@ -94,13 +93,13 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 pred = model.forward(coarse)
                 loss = criterion.forward(pred, dif)
                 loss.backward()
-                total_loss += loss.item()*batchsize
+                total_loss += loss.item()
                 #if (i+1)%gradient_accumulation_steps==0:
                 opt.step()
                 opt.zero_grad()
                 pbar.update(local_batch_size)
                 pbar.set_description(f"Epoch {e+1} Loss: {loss.item():.8f}")
-        logger.log(f"Train Loss at Epoch {e+1}: {total_loss/(len(train_dataloader)*local_batch_size)}")
+        logger.log(f"Train Loss at Epoch {e+1}: {total_loss/(len(train_dataloader))}")
 
         model.eval()
         with torch.no_grad():
@@ -109,12 +108,12 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
                     pred = model.forward(coarse)
-                    loss = val_criterion.forward(pred, dif)
+                    loss = criterion.forward(pred, dif)
                     total_loss += loss.item()
 
                     pbar.update(local_batch_size)
                     pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
-        logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader)*local_batch_size)}")
+        logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader))}")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    
