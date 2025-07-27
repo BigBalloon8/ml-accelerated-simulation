@@ -323,7 +323,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     torch.cuda.synchronize()
     
     inference_precomputed = True
-    inference_steps = {}
 
     if os.path.isfile("/content/drive/MyDrive/checkpoints/inference_steps.pt"):
         inference_steps = st.load_file("/content/drive/MyDrive/checkpoints/inference_steps.pt")
@@ -334,7 +333,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             print("Instance Steps Found")
     else:
         inference_precomputed = False
-        inference_steps
+        inference_steps = {}
 
     with tqdm(total=int(1/coarse_dt),desc=f"Control Error: NaN, LC Error: NaN") as pbar:
         for i in range(int(1/coarse_dt)):
@@ -380,13 +379,13 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             LC_errors.append(MAE(coarsened_full, coarse.transpose(0,1)).item())
 
             if i % 64 == 0:
-                st.save_file(inference_steps, "/content/drive/MyDrive/checkpoints/inference_steps.pt")
                 logger.log(f"Control Error: {control_errors[-1]}")
                 logger.log(f"LC Error: {LC_errors[-1]}")
             
             pbar.update(1)
             pbar.set_description(f"Control Error: {control_errors[-1]}, LC Error: {LC_errors[-1]}")
     
+    st.save_file(inference_steps, "/content/drive/MyDrive/checkpoints/inference_steps.pt")
     logger.log(f"Final Control Error: {control_errors[-1]}")
     logger.log(f"Final LC Error: {LC_errors[-1]}")
     graph_vec_field(coarsened_full[:,0], "full.png")
