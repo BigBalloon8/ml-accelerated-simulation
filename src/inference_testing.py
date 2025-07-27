@@ -334,54 +334,59 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         inference_precomputed = False
         inference_steps
 
-
-    for i in range(int(1/coarse_dt)):
-        if not inference_precomputed:
-            with torch.cuda.stream(full_stream):
-                for _ in range(16):
-                    v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+    with tqdm(total=int(1/coarse_dt),desc=f"Control Error: NaN, LC Error: NaN") as pbar:
+        for i in range(int(1/coarse_dt)):
+            if not inference_precomputed:
+                with torch.cuda.stream(full_stream):
+                    for _ in range(16):
+                        v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+                
+                with torch.cuda.stream(coarse_stream):
+                    v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
+                
             
-            with torch.cuda.stream(coarse_stream):
-                v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
+                coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
+                v_coarse_tensor = get_grid_data(v_coarse)
+                inference_steps[f"full_{i}"] = coarsened_full
+                inference_steps[f"coarse_{i}"] = v_coarse_tensor
+            else:
+                coarsened_full = inference_steps[f"full_{i}"]
+                v_coarse_tensor = inference_steps[f"coarse_{i}"]
             
-           
-            coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
-            v_coarse_tensor = get_grid_data(v_coarse)
-            inference_steps[f"full_{i}"] = coarsened_full
-            inference_steps[f"coarse_{i}"] = v_coarse_tensor
-        else:
-            coarsened_full = inference_steps[f"full_{i}"]
-            v_coarse_tensor = inference_steps[f"coarse_{i}"]
-        
-        
-        with torch.cuda.stream(LC_stream):
-            v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
-            coarse = get_grid_data(v_LC_coarse).transpose(0,1)
-            coarse_norm = coarse / input_scale
+            
+            with torch.cuda.stream(LC_stream):
+                v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
+                coarse = get_grid_data(v_LC_coarse).transpose(0,1)
+                coarse_norm = coarse / input_scale
 
-        with torch.cuda.stream(model_stream):
-            torch.cuda.current_stream().wait_stream(LC_stream)
-            delta_v = model.forward(coarse_norm)
-
-        if not no_segment:
-            with torch.cuda.stream(mask_stream):
+            with torch.cuda.stream(model_stream):
                 torch.cuda.current_stream().wait_stream(LC_stream)
-                mask = get_mask(coarse_norm, seg_model)
-                torch.cuda.current_stream().wait_stream(model_stream)
-                delta_v = delta_v.masked_fill(mask, 0)
+                delta_v = model.forward(coarse_norm)
 
-        torch.cuda.synchronize()
-        coarse += delta_v*output_scale
-        coarse = coarse.squeeze_()
-        v_LC_coarse = tensor_to_grid(coarse.transpose(0,1), LC_coarse_grid, v_LC_coarse)
-        control_errors.append(MAE(coarsened_full, v_coarse_tensor).item())
-        LC_errors.append(MAE(coarsened_full, coarse.transpose(0,1)).item())
+            if not no_segment:
+                with torch.cuda.stream(mask_stream):
+                    torch.cuda.current_stream().wait_stream(LC_stream)
+                    mask = get_mask(coarse_norm, seg_model)
+                    torch.cuda.current_stream().wait_stream(model_stream)
+                    delta_v = delta_v.masked_fill(mask, 0)
 
-        if i % 64 == 0:
-            st.save_file(inference_steps, "/content/drive/MyDrive/checkpoints/inference_steps.pt")
-            logger.log(f"Control Error: {control_errors[-1]}")
-            logger.log(f"LC Error: {LC_errors[-1]}")
+            torch.cuda.synchronize()
+            coarse += delta_v*output_scale
+            coarse = coarse.squeeze_()
+            v_LC_coarse = tensor_to_grid(coarse.transpose(0,1), LC_coarse_grid, v_LC_coarse)
+            control_errors.append(MAE(coarsened_full, v_coarse_tensor).item())
+            LC_errors.append(MAE(coarsened_full, coarse.transpose(0,1)).item())
+
+            if i % 64 == 0:
+                st.save_file(inference_steps, "/content/drive/MyDrive/checkpoints/inference_steps.pt")
+                logger.log(f"Control Error: {control_errors[-1]}")
+                logger.log(f"LC Error: {LC_errors[-1]}")
+            
+            pbar.update(1)
+            pbar.set_description(f"Control Error: {control_errors[-1]}, LC Error: {LC_errors[-1]}")
     
+    logger.log(f"Final Control Error: {control_errors[-1]}")
+    logger.log(f"Final LC Error: {LC_errors[-1]}")
     graph_vec_field(coarsened_full[:.0], "full.png")
     graph_vec_field(get_grid_data(v_coarse)[:.0], "coarse.png")
     graph_vec_field(coarse[:.0], "LC.png")
