@@ -236,7 +236,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
 
     v0_full = filtered_velocity_field(
         full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
-        device=device, batch_size=1)
+        device=device, batch_size=64)
 
     v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
     v0_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v0_full)
@@ -325,7 +325,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         
         with torch.cuda.stream(LC_stream):
             v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
-            coarse = get_grid_data(v_LC_coarse).squeeze(1).unsqueeze(0)
+            coarse = get_grid_data(v_LC_coarse).transpose(0,1)
             coarse_norm = coarse / input_scale
 
         with torch.cuda.stream(model_stream):
@@ -342,7 +342,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         torch.cuda.synchronize()
         coarse += delta_v*output_scale
         coarse = coarse.squeeze_()
-        v_LC_coarse = tensor_to_grid(coarse.squeeze().unsqueeze(1), LC_coarse_grid, v_LC_coarse)
+        v_LC_coarse = tensor_to_grid(coarse.transpose(0,1), LC_coarse_grid, v_LC_coarse)
         coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
         control_errors.append(MAE(coarsened_full, get_grid_data(v_coarse)).item())
         LC_errors.append(MAE(coarsened_full, coarse).item())
@@ -350,9 +350,9 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             logger.log(f"Control Error: {control_errors[-1]}")
             logger.log(f"LC Error: {LC_errors[-1]}")
     
-    graph_vec_field(coarsened_full.squeeze(), "full.png")
-    graph_vec_field(get_grid_data(v_coarse).squeeze(), "coarse.png")
-    graph_vec_field(coarse.squeeze(), "LC.png")
+    graph_vec_field(coarsened_full[:.0], "full.png")
+    graph_vec_field(get_grid_data(v_coarse)[:.0], "coarse.png")
+    graph_vec_field(coarse[:.0], "LC.png")
 
 
 
