@@ -118,8 +118,10 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 with torch.cuda.stream(model_stream):
                     pred = model.forward(coarse)
                 torch.cuda.synchronize()
-                pred = torch.masked_select(pred, mask)
-                dif = torch.masked_select(dif, mask)
+                pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes-1)], dim=0)
+                dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes-1)], dim=0)
+                #pred = torch.masked_select(pred, mask)
+                #dif = torch.masked_select(dif, mask)
                 loss = criterion.forward(pred, dif)
                 loss.backward()
                 total_loss += loss.item()
