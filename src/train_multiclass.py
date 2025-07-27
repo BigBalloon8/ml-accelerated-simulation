@@ -16,7 +16,6 @@ from models import buildModel
 from log import Logger
 
 
-
 def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
     return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
@@ -47,11 +46,12 @@ def get_segment_model(name, config_file, checkpoint_path):
     with open(config_file, "r") as f:
         config = json.load(f)
 
+    num_classes = config[-1]["structures"]["out_channels"]//config[-1]["group"]
     model_base = buildModel(config)
     model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.safetensors")
     model_weights = st.load_file(model_path)
     model_base.load_state_dict(model_weights)
-    return model_base
+    return model_base, num_classes
         
 def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoint_path, model_config, metadata=None):
     with open(model_config, "r") as f:
@@ -66,10 +66,11 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
     torch.save(opt.state_dict(), opt_path)
 
 
-def get_mask(x, segment_model):
+def get_mask(x, segment_model, num_classes):
     with torch.no_grad():
         logits = torch.softmax(segment_model(x), dim=1)
-        return torch.argmax(logits, dim=1, keepdim=True).to(torch.bool)
+        out = torch.argmax(logits, dim=1, keepdim=True)
+        return [out == i for i in range(1, num_classes)]
     
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config):
     torch.set_default_dtype(torch.float64)
@@ -90,7 +91,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
 
-    seg_model = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
+    seg_model, num_classes = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
     seg_model.to(device)
 
     criterion = nn.MSELoss()
@@ -113,7 +114,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
                 with torch.cuda.stream(mask_stream):
-                    mask = get_mask(coarse, seg_model)
+                    mask = get_mask(coarse, seg_model, num_classes)
                 with torch.cuda.stream(model_stream):
                     pred = model.forward(coarse)
                 torch.cuda.synchronize()
@@ -137,12 +138,14 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
                     with torch.cuda.stream(mask_stream):
-                        mask = get_mask(coarse, seg_model)
+                        mask = get_mask(coarse, seg_model, num_classes)
                     with torch.cuda.stream(model_stream):
                         pred = model.forward(coarse)
                     torch.cuda.synchronize()
-                    pred = torch.masked_select(pred, mask)
-                    dif = torch.masked_select(dif, mask)
+                    pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes-1)], dim=0)
+                    dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes-1)], dim=0)
+                    #pred = torch.masked_select(pred, mask)
+                    #dif = torch.masked_select(dif, mask)
                     loss = criterion.forward(pred, dif)
                     total_loss += loss.item()
 

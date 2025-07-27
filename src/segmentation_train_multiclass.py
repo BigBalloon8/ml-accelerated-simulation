@@ -18,7 +18,7 @@ from models import buildModel
 from log import Logger
 
 
-def get_dif_label(dif, classes:list, mode=None):
+def get_dif_label(dif, classes:list, mode:str):
     with open("data/data_percentiles.json", "r") as f:
         data = json.load(f)
     percentages, vals = data["percentiles"]["percentages"], data["percentiles"]["values"] 
@@ -26,7 +26,7 @@ def get_dif_label(dif, classes:list, mode=None):
     percentiles = [vals[idx] for idx in [percentages.index(i) for i in classes]] #get percentiles corrresponding to classes
 
     labels = []
-    if mode is None:
+    if mode == "default":
         for i in range(len(percentiles)):
             labels.append((torch.norm(dif, dim=1)>percentiles[i]).to(torch.int64))
     elif mode == "branching":
@@ -37,7 +37,7 @@ def get_dif_label(dif, classes:list, mode=None):
     elif mode == "scheduling":
         for i in range(len(percentiles)):
             labels.append((torch.norm(dif, dim=1)>percentiles[i]).to(torch.int64))
-    return torch.sum(torch.stack(labels), dim=0) if mode is None else torch.stack(labels)
+    return torch.sum(torch.stack(labels), dim=0) if mode == "default" else torch.stack(labels)
 
 
 
@@ -119,7 +119,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                dif_labels = get_dif_label(dif, percentiles)
+                dif_labels = get_dif_label(dif, percentiles, "default")
                 logits = model.forward(coarse)
                 loss = criterion(logits, dif_labels).mean()
                 loss.backward()
@@ -139,7 +139,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    dif_labels = get_dif_label(dif, percentiles)
+                    dif_labels = get_dif_label(dif, percentiles, "default")
                     logits = model.forward(coarse)
                     loss = criterion(logits, dif_labels).mean()
                     total_loss += loss.item()
