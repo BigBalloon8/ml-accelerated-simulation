@@ -326,10 +326,12 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     inference_steps = {}
 
     if os.path.isfile("/content/drive/MyDrive/checkpoints/inference_steps.pt"):
-        inference_steps = st.load_file("/content/drive/MyDrive/checkpoints/inference_steps.pt", device)
-        if len(inference_steps) != int(1/coarse_dt):
+        inference_steps = st.load_file("/content/drive/MyDrive/checkpoints/inference_steps.pt")
+        if len(inference_steps)//2 != int(1/coarse_dt):
             inference_precomputed = False
             inference_steps = {}
+        else:
+            print("Instance Steps Found")
     else:
         inference_precomputed = False
         inference_steps
@@ -344,14 +346,14 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
                 with torch.cuda.stream(coarse_stream):
                     v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
                 
-            
+                torch.cuda.synchronize()
                 coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
                 v_coarse_tensor = get_grid_data(v_coarse)
-                inference_steps[f"full_{i}"] = coarsened_full
-                inference_steps[f"coarse_{i}"] = v_coarse_tensor
+                inference_steps[f"full_{i}"] = coarsened_full.contiguous()
+                inference_steps[f"coarse_{i}"] = v_coarse_tensor.contiguous()
             else:
-                coarsened_full = inference_steps[f"full_{i}"]
-                v_coarse_tensor = inference_steps[f"coarse_{i}"]
+                coarsened_full = inference_steps[f"full_{i}"].to(device)
+                v_coarse_tensor = inference_steps[f"coarse_{i}"].to(device)
             
             
             with torch.cuda.stream(LC_stream):
@@ -387,9 +389,9 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     
     logger.log(f"Final Control Error: {control_errors[-1]}")
     logger.log(f"Final LC Error: {LC_errors[-1]}")
-    graph_vec_field(coarsened_full[:.0], "full.png")
-    graph_vec_field(get_grid_data(v_coarse)[:.0], "coarse.png")
-    graph_vec_field(coarse[:.0], "LC.png")
+    graph_vec_field(coarsened_full[:,0], "full.png")
+    graph_vec_field(get_grid_data(v_coarse)[:,0], "coarse.png")
+    graph_vec_field(coarse[:,0], "LC.png")
     logger.log(f"Control Errors: {control_errors}")
     logger.log(f"LC Errors: {LC_errors}")
 
