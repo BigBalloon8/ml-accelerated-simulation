@@ -197,8 +197,8 @@ def get_grid_data(x):
     return torch.stack(x.data)
 
 def tensor_to_grid(x, grid, grid_variable_vector):
-    grid_array_0 = grids.GridVariable(x[0].squeeze(), offset=grid_variable_vector[0].offset, grid=grid, bc=grid_variable_vector[0].bc)
-    grid_array_1 = grids.GridVariable(x[1].squeeze(), offset=grid_variable_vector[1].offset, grid=grid, bc=grid_variable_vector[1].bc)
+    grid_array_0 = grids.GridVariable(x[0], offset=grid_variable_vector[0].offset, grid=grid, bc=grid_variable_vector[0].bc)
+    grid_array_1 = grids.GridVariable(x[1], offset=grid_variable_vector[1].offset, grid=grid, bc=grid_variable_vector[1].bc)
     return grids.GridVariableVector((grid_array_0, grid_array_1))
 
 def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_model_name, seg_model_config):
@@ -302,10 +302,16 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
 
     v_full = v0_full
 
-    # Warmup
-    for i in tqdm(range(int(1024)), desc="Warmup"):
-        v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
-    
+    #Warmup
+    if not os.path.isfile("/content/drive/MyDrive/checkpoints/inference_warmup.pt"):
+        for i in tqdm(range(int(1024)), desc="Warmup"):
+            v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+        warmup_states = get_grid_data(v_full)
+        torch.save(warmup_states, "/content/drive/MyDrive/checkpoints/inference_warmup.pt")
+    else:
+        print("Warmup States Found")
+        warmup_states = torch.load("/content/drive/MyDrive/checkpoints/inference_warmup.pt")
+        v_full = tensor_to_grid(warmup_states, full_grid, v_full)
     #Actual Run
     v_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v_full)
     v_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v_full)
@@ -315,13 +321,38 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     control_errors = [0.0]
     LC_errors = [0.0]
     torch.cuda.synchronize()
+    
+    inference_precomputed = True
+    inference_steps = {}
+
+    if os.path.isfile("/content/drive/MyDrive/checkpoints/inference_steps.pt"):
+        inference_steps = st.load_file("/content/drive/MyDrive/checkpoints/inference_steps.pt", device)
+        if len(inference_steps) != int(1/coarse_dt):
+            inference_precomputed = False
+            inference_steps = {}
+    else:
+        inference_precomputed = False
+        inference_steps
+
+
     for i in range(int(1/coarse_dt)):
-        with torch.cuda.stream(full_stream):
-            for _ in range(16):
-                v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+        if not inference_precomputed:
+            with torch.cuda.stream(full_stream):
+                for _ in range(16):
+                    v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+            
+            with torch.cuda.stream(coarse_stream):
+                v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
+            
+           
+            coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
+            v_coarse_tensor = get_grid_data(v_coarse)
+            inference_steps[f"full_{i}"] = coarsened_full
+            inference_steps[f"coarse_{i}"] = v_coarse_tensor
+        else:
+            coarsened_full = inference_steps[f"full_{i}"]
+            v_coarse_tensor = inference_steps[f"coarse_{i}"]
         
-        with torch.cuda.stream(coarse_stream):
-            v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
         
         with torch.cuda.stream(LC_stream):
             v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
@@ -343,16 +374,19 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         coarse += delta_v*output_scale
         coarse = coarse.squeeze_()
         v_LC_coarse = tensor_to_grid(coarse.transpose(0,1), LC_coarse_grid, v_LC_coarse)
-        coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
-        control_errors.append(MAE(coarsened_full, get_grid_data(v_coarse)).item())
-        LC_errors.append(MAE(coarsened_full, coarse).item())
+        control_errors.append(MAE(coarsened_full, v_coarse_tensor).item())
+        LC_errors.append(MAE(coarsened_full, coarse.transpose(0,1)).item())
+
         if i % 64 == 0:
+            st.save_file(inference_steps, "/content/drive/MyDrive/checkpoints/inference_steps.pt")
             logger.log(f"Control Error: {control_errors[-1]}")
             logger.log(f"LC Error: {LC_errors[-1]}")
     
     graph_vec_field(coarsened_full[:.0], "full.png")
     graph_vec_field(get_grid_data(v_coarse)[:.0], "coarse.png")
     graph_vec_field(coarse[:.0], "LC.png")
+    logger.log(f"Control Errors: {control_errors}")
+    logger.log(f"LC Errors: {LC_errors}")
 
 
 
