@@ -377,10 +377,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             v_LC_coarse = tensor_to_grid(coarse.transpose(0,1), LC_coarse_grid, v_LC_coarse)
             control_errors.append(MAE(coarsened_full, v_coarse_tensor).item())
             LC_errors.append(MAE(coarsened_full, coarse.transpose(0,1)).item())
-
-            if i % 64 == 0:
-                logger.log(f"Control Error: {control_errors[-1]}")
-                logger.log(f"LC Error: {LC_errors[-1]}")
             
             pbar.update(1)
             pbar.set_description(f"Control Error: {control_errors[-1]}, LC Error: {LC_errors[-1]}")
