@@ -155,7 +155,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    
-        save_model(seg_model, seg_opt, seg_model_name, checkpoint_path, seg_model_config, {"last_epoch":e})    
+        #save_model(seg_model, seg_opt, seg_model_name, checkpoint_path, seg_model_config, {"last_epoch":e})    
 
         
 
