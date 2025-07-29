@@ -384,9 +384,10 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     st.save_file(inference_steps, "/content/drive/MyDrive/checkpoints/inference_steps.pt")
     logger.log(f"Final Control Error: {control_errors[-1]}")
     logger.log(f"Final LC Error: {LC_errors[-1]}")
+    print(coarsened_full.shape, get_grid_data(v_coarse).shape, coarse.shape)
     graph_vec_field(coarsened_full[:,0], "full.png")
-    graph_vec_field(get_grid_data(v_coarse)[:,0], "coarse.png")
-    graph_vec_field(coarse[:,0], "LC.png")
+    graph_vec_field(v_coarse_tensor[:,0], "coarse.png")
+    graph_vec_field(coarse[0], "LC.png")
     logger.log(f"Control Errors: {control_errors}")
     logger.log(f"LC Errors: {LC_errors}")
 
