@@ -16,12 +16,15 @@ from models import buildModel
 from log import Logger
 
 
+def grouping(config):
+    config[st]
+
 def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
     return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
 
 
-def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[nn.Module, dict]:
+def get_model(name:str, config_file, checkpoint_path, logger, new_run, grouping)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
         config = json.load(f)
     logger.log(f"Model Config: {config}")
