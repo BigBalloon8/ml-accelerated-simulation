@@ -16,17 +16,20 @@ from models import buildModel
 from log import Logger
 
 
-def grouping(config):
-    config[st]
-
 def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
     return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
 
 
-def get_model(name:str, config_file, checkpoint_path, logger, new_run, grouping)-> Tuple[nn.Module, dict]:
+def get_model(name:str, config_file, checkpoint_path, logger, new_run, groups=1)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
         config = json.load(f)
+    
+    if groups > 1:
+        for i in config:
+            i["group"] = groups
+            i["structures"]["in_channels"], i["structures"]["out_channels"] *= 2, 2
+            i["structures"]["hidden_channels"] = [2*j for j in i["structures"]["hidden_channels"]]
     logger.log(f"Model Config: {config}")
 
     model_base = buildModel(config)
@@ -91,11 +94,11 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
     train_dataloader, validation_dataloader = get_kolomogrov_flow_data_loader(data_path, batchsize=local_batch_size)
 
-    model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
-    model = model.to(device)
-
     seg_model, num_classes = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
     seg_model.to(device)
+
+    model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run, num_classes)
+    model = model.to(device)
 
     criterion = nn.MSELoss()
 
@@ -119,10 +122,10 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 with torch.cuda.stream(mask_stream):
                     mask = get_mask(coarse, seg_model, num_classes)
                 with torch.cuda.stream(model_stream):
-                    pred = model.forward(coarse)
+                    pred = model.forward(coarse.repeat(1, num_classes, 1, 1))
                 torch.cuda.synchronize()
-                pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes-1)], dim=0)
-                dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes-1)], dim=0)
+                pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes)], dim=0)
+                dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes)], dim=0)
                 #pred = torch.masked_select(pred, mask)
                 #dif = torch.masked_select(dif, mask)
                 loss = criterion.forward(pred, dif)
@@ -145,10 +148,10 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     with torch.cuda.stream(mask_stream):
                         mask = get_mask(coarse, seg_model, num_classes)
                     with torch.cuda.stream(model_stream):
-                        pred = model.forward(coarse)
+                        pred = model.forward(coarse.repeat(1, num_classes, 1, 1))
                     torch.cuda.synchronize()
-                    pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes-1)], dim=0)
-                    dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes-1)], dim=0)
+                    pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes)], dim=0)
+                    dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes)], dim=0)
                     #pred = torch.masked_select(pred, mask)
                     #dif = torch.masked_select(dif, mask)
                     loss = criterion.forward(pred, dif)
