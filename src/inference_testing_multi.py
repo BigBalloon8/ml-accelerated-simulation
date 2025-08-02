@@ -179,10 +179,11 @@ def get_segment_model(name, config_file, checkpoint_path):
     model_base.load_state_dict(model_weights)
     return model_base, num_classes
 
-def get_mask(x, segment_model):
+def get_mask(x, segment_model, num_classes):
     with torch.no_grad():
         logits = torch.softmax(segment_model(x), dim=1)
-        return ~(torch.argmax(logits, dim=1, keepdim=True).to(torch.bool))
+        out = torch.argmax(logits, dim=1, keepdim=True)
+        return [out == i for i in range(1, num_classes)]
 
 def graph_vec_field(x, file):
     Ux = x[0].cpu().numpy()
