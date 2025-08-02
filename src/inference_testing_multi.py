@@ -367,7 +367,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             with torch.cuda.stream(LC_stream):
                 v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
                 coarse = get_grid_data(v_LC_coarse).transpose(0,1)
-                coarse_norm = coarse / input_scale
+                coarse_norm = (coarse / input_scale).repeat(1, num_classes-1, 1, 1)
 
             with torch.cuda.stream(model_stream):
                 torch.cuda.current_stream().wait_stream(LC_stream)
