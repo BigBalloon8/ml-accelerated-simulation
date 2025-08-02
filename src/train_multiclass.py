@@ -28,8 +28,9 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run, groups=1)
     if groups > 1:
         for i in config:
             i["group"] = groups
-            i["structures"]["in_channels"], i["structures"]["out_channels"] *= 2, 2
-            i["structures"]["hidden_channels"] = [2*j for j in i["structures"]["hidden_channels"]]
+            i["structures"]["in_channels"] *= groups
+            i["structures"]["out_channels"] *= groups
+            i["structures"]["hidden_channels"] = [groups*j for j in i["structures"]["hidden_channels"]]
     logger.log(f"Model Config: {config}")
 
     model_base = buildModel(config)
@@ -97,7 +98,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     seg_model, num_classes = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
     seg_model.to(device)
 
-    model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run, num_classes)
+    model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run, num_classes-1)
     model = model.to(device)
 
     criterion = nn.MSELoss()
@@ -122,10 +123,10 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 with torch.cuda.stream(mask_stream):
                     mask = get_mask(coarse, seg_model, num_classes)
                 with torch.cuda.stream(model_stream):
-                    pred = model.forward(coarse.repeat(1, num_classes, 1, 1))
+                    pred = model.forward(coarse.repeat(1, num_classes-1, 1, 1))
                 torch.cuda.synchronize()
-                pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes)], dim=0)
-                dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes)], dim=0)
+                pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(len(mask)//2)], dim=0)
+                dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(len(mask)//2)], dim=0)
                 #pred = torch.masked_select(pred, mask)
                 #dif = torch.masked_select(dif, mask)
                 loss = criterion.forward(pred, dif)
@@ -148,10 +149,10 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     with torch.cuda.stream(mask_stream):
                         mask = get_mask(coarse, seg_model, num_classes)
                     with torch.cuda.stream(model_stream):
-                        pred = model.forward(coarse.repeat(1, num_classes, 1, 1))
+                        pred = model.forward(coarse.repeat(1, num_classes-1, 1, 1))
                     torch.cuda.synchronize()
-                    pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes)], dim=0)
-                    dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(num_classes)], dim=0)
+                    pred = torch.cat([torch.masked_select(pred[:,2*i:2*(i+1)], mask[i]) for i in range(len(mask)//2)], dim=0)
+                    dif = torch.cat([torch.masked_select(dif[:,2*i:2*(i+1)], mask[i]) for i in range(len(mask)//2)], dim=0)
                     #pred = torch.masked_select(pred, mask)
                     #dif = torch.masked_select(dif, mask)
                     loss = criterion.forward(pred, dif)

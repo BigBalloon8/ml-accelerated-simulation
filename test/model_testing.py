@@ -1,5 +1,5 @@
 import torch
 
 a = []
-for i in a:
-    print(i*2)
+for i in range(1,3):
+    print(i)
