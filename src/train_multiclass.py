@@ -60,9 +60,16 @@ def get_segment_model(name, config_file, checkpoint_path):
     model_base.load_state_dict(model_weights)
     return model_base, num_classes
         
-def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoint_path, model_config, metadata=None):
+def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoint_path, model_config, metadata=None, groups=1):
     with open(model_config, "r") as f:
         config = json.load(f)
+    
+    if groups > 1:
+        for i in config:
+            i["group"] = groups
+            i["structures"]["in_channels"] *= groups
+            i["structures"]["out_channels"] *= groups
+            i["structures"]["hidden_channels"] = [groups*j for j in i["structures"]["hidden_channels"]]
     metadata["model_config"] = config
     model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}.safetensors")
     opt_path = os.path.join(checkpoint_path, f"{model_type}_ADAM_{hash_dict(config)}.pt")
@@ -163,7 +170,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader))}")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
-        save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    
+        save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e}, num_classes-1)    
 
         
 
