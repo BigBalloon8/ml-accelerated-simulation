@@ -379,7 +379,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
                     torch.cuda.current_stream().wait_stream(LC_stream)
                     mask = get_mask(coarse_norm, seg_model)
                     torch.cuda.current_stream().wait_stream(model_stream)
-                    delta_v = delta_v.masked_fill(mask, 0)
+                    delta_v = [delta_v.masked_fill(mask, 0) for i in ] 
 
             torch.cuda.synchronize()
             coarse += delta_v*output_scale
