@@ -368,16 +368,16 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             with torch.cuda.stream(LC_stream):
                 v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
                 coarse = get_grid_data(v_LC_coarse).transpose(0,1)
-                coarse_norm = (coarse / input_scale).repeat(1, num_classes-1, 1, 1)
+                coarse_norm = (coarse / input_scale)
 
             with torch.cuda.stream(model_stream):
                 torch.cuda.current_stream().wait_stream(LC_stream)
-                delta_v = model.forward(coarse_norm)
+                delta_v = model.forward(coarse_norm.repeat(1, num_classes-1, 1, 1))
 
             if not no_segment:
                 with torch.cuda.stream(mask_stream):
                     torch.cuda.current_stream().wait_stream(LC_stream)
-                    mask = get_mask(coarse_norm, seg_model)
+                    mask = get_mask(coarse_norm, seg_model, num_classes)
                     torch.cuda.current_stream().wait_stream(model_stream)
                     deltas = []
                     for i in range(len(mask)):
