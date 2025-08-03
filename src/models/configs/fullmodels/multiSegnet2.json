@@ -1,0 +1,34 @@
+[
+{
+    "name": "CNN", 
+    "structures": {
+        "in_channels": 2,
+        "hidden_channels": [64, 64, 64, 64, 64],
+        "out_channels": 64
+    },
+    "kernel_sizes": 3,
+    "strides": 1,
+    "paddings": 1,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "relu",
+    "bn": false
+},
+{
+    "name": "CNN", 
+    "structures": {
+        "in_channels": 64,
+        "hidden_channels": [],
+        "out_channels": 5
+    },
+    "kernel_sizes": 1,
+    "strides": 1,
+    "paddings": 0,
+    "group": 1,
+    "dropouts": 0,
+    "activation_func": "identity",
+    "bn": false
+}
+
+
+]

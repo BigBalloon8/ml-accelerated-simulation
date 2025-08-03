@@ -94,7 +94,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     batchsize = 32
     gradient_accumulation_steps = 1
     local_batch_size = batchsize // gradient_accumulation_steps
-    percentiles = [33.3, 66.7]
+    percentiles = [20.0, 40.0, 60.0, 80.0]
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
