@@ -18,27 +18,24 @@ from models import buildModel
 from log import Logger
 
 
-def get_dif_label(dif, classes:list, mode:str):
+def get_dif_label(dif, num_classes:int, mode:str):
     with open("data/data_percentiles.json", "r") as f:
         data = json.load(f)
-    percentages, vals = data["percentiles"]["percentages"], data["percentiles"]["values"] 
-    classes = [66.7 if round(i)==66 or round(i)==67 else float(i) for i in classes] #correct values for extraction from list
-    percentiles = [vals[idx] for idx in [percentages.index(i) for i in classes]] #get percentiles corrresponding to classes
+    classes = data["percentiles"][str(num_classes)]
 
     labels = []
     if mode == "default":
-        for i in range(len(percentiles)):
-            labels.append((torch.norm(dif, dim=1)>percentiles[i]).to(torch.int64))
+        for i in range(len(classes)):
+            labels.append((torch.norm(dif, dim=1)>classes[i]).to(torch.int64))
     elif mode == "branching":
-        for i in range(len(percentiles)):
-            if i < len(percentiles)-1:
-                labels.append((torch.norm(dif, dim=1)>percentiles[i] and torch.norm(dif, dim=1)<percentiles[i+1]).to(torch.int64))
-        labels.append((torch.norm(dif, dim=1)>percentiles[i]).to(torch.int64))
+        for i in range(len(classes)):
+            if i < len(classes)-1:
+                labels.append((torch.norm(dif, dim=1)>classes[i] and torch.norm(dif, dim=1)<classes[i+1]).to(torch.int64))
+        labels.append((torch.norm(dif, dim=1)>classes[i]).to(torch.int64))
     elif mode == "scheduling":
-        for i in range(len(percentiles)):
-            labels.append((torch.norm(dif, dim=1)>percentiles[i]).to(torch.int64))
+        for i in range(len(classes)):
+            labels.append((torch.norm(dif, dim=1)>classes[i]).to(torch.int64))
     return torch.sum(torch.stack(labels), dim=0) if mode == "default" else torch.stack(labels)
-
 
 
 
@@ -83,18 +80,17 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
     torch.save(opt.state_dict(), opt_path)
     
     
-def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run):
+def main(data_path, model_type, model_config, checkpoint_path, log_file, num_classes, new_run):
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
     random.seed(2025)
 
     logger = Logger(model_type, log_file)
 
-    EPOCHS = 500
+    EPOCHS = 140
     batchsize = 32
     gradient_accumulation_steps = 1
     local_batch_size = batchsize // gradient_accumulation_steps
-    percentiles = [20.0, 40.0, 60.0, 80.0]
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -119,7 +115,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                dif_labels = get_dif_label(dif, percentiles, "default")
+                dif_labels = get_dif_label(dif, num_classes, "default")
                 logits = model.forward(coarse)
                 loss = criterion(logits, dif_labels).mean()
                 loss.backward()
@@ -139,7 +135,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    dif_labels = get_dif_label(dif, percentiles, "default")
+                    dif_labels = get_dif_label(dif, num_classes, "default")
                     logits = model.forward(coarse)
                     loss = criterion(logits, dif_labels).mean()
                     total_loss += loss.item()
@@ -162,5 +158,6 @@ if __name__ == "__main__":
     ap.add_argument("--model_config", default="./model.config", help="path to model config")
     ap.add_argument("--checkpoint_path", default=".", help="path to model config")
     ap.add_argument("--log_file", default="/content/drive/MyDrive/logs/general.log", help="path to log file")
+    ap.add_argument("--num_classes", type=int, default=2, help="number of segmentation classes: 2-5")
     ap.add_argument("--new_run", action="store_true")
     main(**ap.parse_args().__dict__)
