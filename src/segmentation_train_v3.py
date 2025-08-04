@@ -11,7 +11,7 @@ import os
 from typing import Tuple
 import random
 import hashlib
-from functools import partial
+import numpy as np
 
 from data.dataloader import get_kolomogrov_flow_data_loader
 from models import buildModel
@@ -22,25 +22,19 @@ def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
     return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
 
-def set_config(config, mode:str, groups:int):
-    #only use segnet.json
-    if mode == "default":
-        i["structures"]["out_channels"] = groups+1
-    else:
-        if groups > 1: 
-            for i in config:
-                i["group"] = groups
-                i["structures"]["in_channels"] *= groups
-                i["structures"]["out_channels"] *= groups
-                i["structures"]["hidden_channels"] = [groups*j for j in i["structures"]["hidden_channels"]]
-    return config
+def get_classes(classes:list):
+    classes = np.array(classes)
+    cl_width = 1/classes
+    return np.array([[cl_width[i]*j for j in range(1, classes[i])] for i in range(len(classes))])
+
+def mask_from_classes(x, classes):
+    binary_masks = [(torch.norm(x, dim=1)>classes[i]).to(torch.int64) for i in range(len(classes))]
+    return torch.sum(torch.stack(binary_masks), dim=0)
 
 
-
-def get_model(name:str, config_file, checkpoint_path, logger, new_run, mode, groups)-> Tuple[nn.Module, dict]:
+def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
         config = json.load(f)
-    config = set_config(config, mode, groups)
     logger.log(f"Model Config: {config}")
 
     model_base = buildModel(config)
@@ -60,10 +54,9 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run, mode, gro
     return model_base, metadata, opt_state
     
         
-def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoint_path, model_config, mode, groups, metadata=None):
+def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoint_path, model_config, metadata=None):
     with open(model_config, "r") as f:
         config = json.load(f)
-    config = set_config(config, mode, groups)
     
     metadata["model_config"] = config
     model_path = os.path.join(checkpoint_path, f"{model_type}_{hash_dict(config)}_seg.safetensors")
@@ -75,45 +68,32 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
     torch.save(opt.state_dict(), opt_path)
     
 
-def get_dif_label(dif, num_classes:int, mode:str):
+def get_dif_label(dif):
     with open("data/data_percentiles.json", "r") as f:
         data = json.load(f)
-    classes = data["percentiles"][str(num_classes)]
+    percentiles, vals = data["percentages"], data["values"]
 
-    labels = []
-    if mode == "default":
-        for i in range(len(classes)):
-            labels.append((torch.norm(dif, dim=1)>classes[i]).to(torch.int64))
-    elif mode == "group":
-        for i in range(len(classes)):
-            if i < len(classes)-1:
-                labels.append((torch.norm(dif, dim=1)>classes[i] and torch.norm(dif, dim=1)<classes[i+1]).to(torch.int64))
-        labels.append((torch.norm(dif, dim=1)>classes[i]).to(torch.int64))
-    elif mode == "scheduling":
-        for i in range(len(classes)):
-            labels.append((torch.norm(dif, dim=1)>classes[i]).to(torch.int64))
-    return torch.sum(torch.stack(labels), dim=0) if mode == "default" else labels
+    dif_norm = torch.norm(dif, dim=1)
+    labels = torch.zeros_like(dif_norm)
+
+    for i in range(len(percentiles)):
+        if i < len(percentiles)-1:
+            labels[(dif_norm>vals[i]) & (dif_norm<vals[i+1])] = percentiles[i]
+    labels[dif_norm>percentiles[i]] = percentiles[i]
+    return labels
 
 
-def group_cat(x:torch.Tensor):
-    labels = []
-
-    for i in range(1, x.size()[1]//2):
-        logits = torch.softmax(x[:,2*i:2*(i+1)], dim=1)
-        out = torch.argmax(logits, dim=1, keepdim=True)
-        labels.append(out)
-        if i > 0:
-            dups = dups 
-        else:
-            dups = out
-    output = torch.sum(torch.stack(labels), dim=0)
-
-    dups = (output>1).to(torch.int64)
-    #max_val = torch.max(mask).item()
-
+def class_accuracy(logits, dif_labels, classes=list(range(2, 6))):
+    percentiles = get_classes(classes)
+    acc = np.array([])
+    for item in percentiles:
+        logit = mask_from_classes(logits, item)
+        dif_label = mask_from_classes(dif_labels, item)
+        np.append(acc, (torch.argmax(logit, dim=1)==dif_label).sum()/torch.numel(dif_label))
+    return acc
 
  
-def main(data_path, model_type, model_config, checkpoint_path, log_file, mode, num_classes, new_run):
+def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run):
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
     random.seed(2025)
@@ -129,10 +109,10 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, mode, n
 
     train_dataloader, validation_dataloader = get_kolomogrov_flow_data_loader(data_path, batchsize=local_batch_size)
 
-    model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run, mode, num_classes-1)
+    model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
 
-    criterion = torch.vmap(torch.vmap(F.cross_entropy, in_dims=-1, out_dims=-1), in_dims=-1, out_dims=-1)
+    criterion = nn.MSELoss()
 
     opt = torch.optim.Adam(model.parameters())
     if opt_state is not None:
@@ -148,15 +128,9 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, mode, n
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                dif_labels = get_dif_label(dif, num_classes, mode)
-                if mode == "default":
-                    logits = model.forward(coarse)
-                    loss = criterion(logits, dif_labels).mean()
-                else:
-                    loss = 0 
-                    logits = model.forward(coarse.repeat(1, num_classes-1, 1, 1))
-                    for j, diff in enumerate(dif_labels):
-                        loss += criterion(logits[:,2*i:2*(i+1)], diff).mean()
+                dif_labels = get_dif_label(dif)
+                logits = model.forward(coarse)
+                loss = criterion(logits, dif_labels)
                 loss.backward()
                 total_loss += loss.item()
                 #if (i+1)%gradient_accumulation_steps==0:
@@ -170,29 +144,22 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, mode, n
         model.eval()
         with torch.no_grad():
             total_loss = 0
-            total_acc = 0
+            total_acc = np.zeros(4)
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    dif_labels = get_dif_label(dif, num_classes, mode)
-                    if mode == "default":
-                        logits = model.forward(coarse)
-                        loss = (criterion(logits, dif_labels).mean()).item()
-                    else:
-                        loss = 0 
-                        logits = model.forward(coarse.repeat(1, num_classes-1, 1, 1))
-                        for j, diff in enumerate(dif_labels):
-                            loss += (criterion(logits[:,2*i:2*(i+1)], diff).mean()).item()
-                    total_loss += loss
-                    total_acc += (torch.argmax(logits, dim=1)==dif_labels).sum()/torch.numel(dif_labels)
-
+                    dif_labels = get_dif_label(dif)
+                    logits = model.forward(coarse)
+                    loss = criterion(logits, dif_labels)
+                    total_loss += loss.item()
+                    total_acc += class_accuracy(logits, dif_labels)
                     pbar.update(local_batch_size)
                     pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader))}")
         logger.log(f"Validation Accuracy at Epoch {e+1}: {(total_acc*100)/(len(validation_dataloader)):.4f}%")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
-        save_model(model, opt, model_type, checkpoint_path, model_config, mode, num_classes-1, {"last_epoch":e})    
+        save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    
 
         
 
@@ -203,7 +170,5 @@ if __name__ == "__main__":
     ap.add_argument("--model_config", default="./model.config", help="path to model config")
     ap.add_argument("--checkpoint_path", default=".", help="path to model config")
     ap.add_argument("--log_file", default="/content/drive/MyDrive/logs/general.log", help="path to log file")
-    ap.add_argument("--mode", default="default", help="segmentation mode: [default, group]")
-    ap.add_argument("--num_classes", type=int, default=2, help="number of segmentation classes: 2-5")
     ap.add_argument("--new_run", action="store_true")
     main(**ap.parse_args().__dict__)

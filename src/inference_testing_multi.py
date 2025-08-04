@@ -380,8 +380,8 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
                     mask = get_mask(coarse_norm, seg_model, num_classes)
                     torch.cuda.current_stream().wait_stream(model_stream)
                     deltas = []
-                    for i in range(len(mask)):
-                        deltas.append(delta_v[:, 2*i:2*(i+1)].masked_fill(~mask[i], 0))
+                    for j in range(len(mask)):
+                        deltas.append(delta_v[:, 2*j:2*(j+1)].masked_fill(~mask[j], 0))
                     delta_v = torch.sum(torch.stack(deltas), dim=0)
 
             torch.cuda.synchronize()

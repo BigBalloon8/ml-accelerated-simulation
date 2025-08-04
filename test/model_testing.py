@@ -1,6 +1,7 @@
 import torch
 import hashlib
 import json
+import numpy as np
 
 def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
@@ -21,4 +22,6 @@ def pt(name, config_file, groups):
     print(f"{name}_ADAM_{hash_dict(config)}.pt") #opt_path = 
     print(f"{name}_{hash_dict(config)}.json")
 
-pt("BASELINE_4cl", "src/models/configs/fullmodels/baselines/MLACFD1.json", 3)
+#pt("BASELINE_4cl", "src/models/configs/fullmodels/baselines/MLACFD1.json", 3)
+a, b = np.arange(10), np.arange(10)
+print(a+b)
