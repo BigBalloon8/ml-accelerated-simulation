@@ -11,7 +11,6 @@ import os
 from typing import Tuple
 import random
 import hashlib
-import numpy as np
 
 from data.dataloader import get_kolomogrov_flow_data_loader
 from models import buildModel
@@ -23,11 +22,11 @@ def hash_dict(x:dict):
     return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
 
 def get_classes(classes:list):
-    classes = np.array(classes)
+    classes = torch.tensor(classes)
     cl_width = 1/classes
     out = []
     for i in range(len(classes)):
-        out.append([cl_width[i]*j for j in range(1, int(classes[i]))])  
+        out.append(torch.tensor([cl_width[i]*j for j in range(1, int(classes[i]))]))  
     return out
 
 def mask_from_classes(x, classes):
@@ -90,12 +89,12 @@ def get_dif_label(dif, percentiles, vals):
 
 def class_accuracy(logits, dif_labels, classes=list(range(2, 6))):
     percentiles = get_classes(classes)
-    acc = np.array([])
+    acc = []
     for item in percentiles:
         logit = mask_from_classes(logits, item)
         dif_label = mask_from_classes(dif_labels, item)
-        np.append(acc, (logit==dif_label).sum()/torch.numel(dif_label))
-    return acc
+        acc.append((logit==dif_label).sum()/torch.numel(dif_label))
+    return torch.tensor(acc)
 
  
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run):
@@ -152,7 +151,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         model.eval()
         with torch.no_grad():
             total_loss = 0
-            total_acc = np.zeros(4)
+            total_acc = torch.zeros(4)
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
@@ -164,7 +163,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                     pbar.update(local_batch_size)
                     pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
         logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader))}")
-        logger.log(f"Validation Accuracy at Epoch {e+1}: {(total_acc*100)/(len(validation_dataloader)):.4f}%")
+        logger.log(f"Validation Accuracy at Epoch {e+1}: {[f'{j:.4f}' for j in ((total_acc*100)/(len(validation_dataloader))).tolist()]}%")
         scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
 
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})    

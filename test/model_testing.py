@@ -25,11 +25,11 @@ def pt(name, config_file, groups):
 #pt("BASELINE_4cl", "src/models/configs/fullmodels/baselines/MLACFD1.json", 3)
 
 def get_classes(classes:list):
-    classes = np.array(classes)
+    classes = torch.tensor(classes)
     cl_width = 1/classes
     out = []
     for i in range(len(classes)):
-        out.append([cl_width[i]*j for j in range(1, int(classes[i]))])  
+        out.append(torch.tensor([cl_width[i]*j for j in range(1, int(classes[i]))]))  
     return out
 
 def mask_from_classes(x, classes):
