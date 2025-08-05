@@ -72,7 +72,7 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
 def get_percentile():
     with open("data/data_percentiles.json", "r") as f:
         data = json.load(f)
-    return data["percentages"], data["values"]
+    return torch.tensor(data["percentages"]), torch.tensor(data["values"])
 
 def get_dif_label(dif, percentiles, vals):
     dif_norm = torch.norm(dif, dim=1)
