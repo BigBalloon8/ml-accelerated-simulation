@@ -25,7 +25,10 @@ def hash_dict(x:dict):
 def get_classes(classes:list):
     classes = np.array(classes)
     cl_width = 1/classes
-    return np.array([[cl_width[i]*j for j in range(1, classes[i])] for i in range(len(classes))])
+    out = []
+    for i in range(len(classes)):
+        out.append([cl_width[i]*j for j in range(1, int(classes[i]))])  
+    return out
 
 def mask_from_classes(x, classes):
     binary_masks = [(torch.norm(x, dim=1)>classes[i]).to(torch.int64) for i in range(len(classes))]

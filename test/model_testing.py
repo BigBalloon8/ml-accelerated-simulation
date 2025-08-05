@@ -23,5 +23,24 @@ def pt(name, config_file, groups):
     print(f"{name}_{hash_dict(config)}.json")
 
 #pt("BASELINE_4cl", "src/models/configs/fullmodels/baselines/MLACFD1.json", 3)
-a, b = np.arange(10), np.arange(10)
-print(a+b)
+
+def get_classes(classes:list):
+    classes = np.array(classes)
+    cl_width = 1/classes
+    out = []
+    for i in range(len(classes)):
+        out.append([cl_width[i]*j for j in range(1, int(classes[i]))])  
+    return out
+
+def mask_from_classes(x, classes):
+    binary_masks = [(torch.norm(x, dim=1)>classes[i]).to(torch.int64) for i in range(len(classes))]
+    return torch.sum(torch.stack(binary_masks), dim=0)
+
+def class_accuracy(logits, dif_labels, classes=list(range(2, 6))):
+    percentiles = get_classes(classes)
+    acc = np.array([])
+    for item in percentiles:
+        logit = mask_from_classes(logits, item)
+        dif_label = mask_from_classes(dif_labels, item)
+        np.append(acc, (torch.argmax(logit, dim=1)==dif_label).sum()/torch.numel(dif_label))
+    return acc
