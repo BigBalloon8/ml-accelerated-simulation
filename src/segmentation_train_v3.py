@@ -32,6 +32,7 @@ def mask_from_classes(x, classes):
     return torch.sum(torch.stack(binary_masks), dim=0)
 
 
+
 def get_model(name:str, config_file, checkpoint_path, logger, new_run)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
         config = json.load(f)
@@ -68,19 +69,20 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
     torch.save(opt.state_dict(), opt_path)
     
 
-def get_dif_label(dif):
+def get_percentile():
     with open("data/data_percentiles.json", "r") as f:
         data = json.load(f)
-    percentiles, vals = data["percentages"], data["values"]
+    return data["percentages"], data["values"]
 
+def get_dif_label(dif, percentiles, vals):
     dif_norm = torch.norm(dif, dim=1)
     labels = torch.zeros_like(dif_norm)
 
     for i in range(len(percentiles)):
         if i < len(percentiles)-1:
             labels[(dif_norm>vals[i]) & (dif_norm<vals[i+1])] = percentiles[i]
-    labels[dif_norm>percentiles[i]] = percentiles[i]
-    return labels
+    labels[dif_norm>vals[i]] = percentiles[i]
+    return labels.unsqueeze(dim=1)
 
 
 def class_accuracy(logits, dif_labels, classes=list(range(2, 6))):
@@ -112,6 +114,9 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
 
+    percentiles, vals = get_percentile()
+    percentiles, vals = percentiles.to(device), vals.to(device)
+
     criterion = nn.MSELoss()
 
     opt = torch.optim.Adam(model.parameters())
@@ -128,7 +133,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                dif_labels = get_dif_label(dif)
+                dif_labels = get_dif_label(dif, percentiles, vals)
                 logits = model.forward(coarse)
                 loss = criterion(logits, dif_labels)
                 loss.backward()
@@ -148,7 +153,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    dif_labels = get_dif_label(dif)
+                    dif_labels = get_dif_label(dif, percentiles, vals)
                     logits = model.forward(coarse)
                     loss = criterion(logits, dif_labels)
                     total_loss += loss.item()
