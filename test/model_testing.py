@@ -45,4 +45,5 @@ def class_accuracy(logits, dif_labels, classes=list(range(2, 6))):
         np.append(acc, (torch.argmax(logit, dim=1)==dif_label).sum()/torch.numel(dif_label))
     return acc
 
-print(get_classes([2,3,4]))
+#print(get_classes([2,3,4]))
+print(np.linspace(0.1, 100, 999, endpoint=False))
