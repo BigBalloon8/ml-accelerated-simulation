@@ -3,7 +3,7 @@
     "name": "CNN", 
     "structures": {
         "in_channels": 2,
-        "hidden_channels": [64, 64, 64, 64, 64],
+        "hidden_channels": [64, 64, 64, 64, 64, 64, 64, 64, 64],
         "out_channels": 64
     },
     "kernel_sizes": 3,
