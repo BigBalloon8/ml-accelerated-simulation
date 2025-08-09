@@ -66,10 +66,10 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run, metadata,
 
     model_base = buildModel(config)
     
-    if f"{name}_{metadata["last_m"]}_{metadata["last_k"]}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
-        print(f"Model Found in {checkpoint_path}: {name}_{metadata["last_m"]}_{metadata["last_k"]}_{hash_dict(config)}.safetensors")
-        model_path = os.path.join(checkpoint_path, f"{name}_{metadata["last_m"]}_{metadata["last_k"]}_{hash_dict(config)}.safetensors")
-        opt_path = os.path.join(checkpoint_path, f"{name}_{metadata["last_m"]}_{metadata["last_k"]}_ADAM_{hash_dict(config)}.pt")
+    if f"{name}_{metadata['last_m']}_{metadata['last_k']}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
+        print(f"Model Found in {checkpoint_path}: {name}_{metadata['last_m']}_{metadata['last_k']}_{hash_dict(config)}.safetensors")
+        model_path = os.path.join(checkpoint_path, f"{name}_{metadata['last_m']}_{metadata['last_k']}_{hash_dict(config)}.safetensors")
+        opt_path = os.path.join(checkpoint_path, f"{name}_{metadata['last_m']}_{metadata['last_k']}_ADAM_{hash_dict(config)}.pt")
         model_weights = st.load_file(model_path)
         model_base.load_state_dict(model_weights)
         opt_state = torch.load(opt_path)
@@ -88,8 +88,8 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
             i["structures"]["hidden_channels"] = [groups*j for j in i["structures"]["hidden_channels"]]
 
     metadata["model_config"] = config
-    model_path = os.path.join(checkpoint_path, f"{model_type}_{metadata["last_m"]}_{metadata["last_k"]}_{hash_dict(config)}.safetensors")
-    opt_path = os.path.join(checkpoint_path, f"{model_type}_{metadata["last_m"]}_{metadata["last_k"]}_ADAM_{hash_dict(config)}.pt")
+    model_path = os.path.join(checkpoint_path, f"{model_type}_{metadata['last_m']}_{metadata['last_k']}_{hash_dict(config)}.safetensors")
+    opt_path = os.path.join(checkpoint_path, f"{model_type}_{metadata['last_m']}_{metadata['last_k']}_ADAM_{hash_dict(config)}.pt")
     with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(model_type)}.json"), "w") as f:
         json.dump(metadata, f)
     st.save_model(model, model_path)
