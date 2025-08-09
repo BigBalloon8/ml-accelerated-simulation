@@ -54,7 +54,7 @@ def load_metadata(name:str, checkpoint_path, new_run):
         with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(name)}.json"), "r") as f:
             metadata = json.load(f)
     else:
-        metadata = {"last_m":-1, "last_k":-1, "last_epoch":-1, "last_loss":0, "best_loss":1e4, "m_losses":[]}
+        metadata = {"last_m":0, "last_k":0, "last_epoch":0, "last_loss":0, "best_loss":1e4, "m_losses":[]}
     return metadata
 
 def get_model(name:str, config_file, checkpoint_path, logger, new_run, metadata, groups=1)-> Tuple[nn.Module, Any]:
@@ -70,10 +70,10 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run, metadata,
 
     model_base = buildModel(config)
     
-    if f"{name}_{metadata['last_m']}_{metadata['last_k']}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
-        print(f"Model Found in {checkpoint_path}: {name}_{metadata['last_m']}_{metadata['last_k']}_{hash_dict(config)}.safetensors")
-        model_path = os.path.join(checkpoint_path, f"{name}_{metadata['last_m']}_{metadata['last_k']}_{hash_dict(config)}.safetensors")
-        opt_path = os.path.join(checkpoint_path, f"{name}_{metadata['last_m']}_{metadata['last_k']}_ADAM_{hash_dict(config)}.pt")
+    if f"{name}_{metadata['last_m']+1}_{metadata['last_k']+1}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path) and not new_run:
+        print(f"Model Found in {checkpoint_path}: {name}_{metadata['last_m']+1}_{metadata['last_k']+1}_{hash_dict(config)}.safetensors")
+        model_path = os.path.join(checkpoint_path, f"{name}_{metadata['last_m']+1}_{metadata['last_k']+1}_{hash_dict(config)}.safetensors")
+        opt_path = os.path.join(checkpoint_path, f"{name}_{metadata['last_m']+1}_{metadata['last_k']+1}_ADAM_{hash_dict(config)}.pt")
         model_weights = st.load_file(model_path)
         model_base.load_state_dict(model_weights)
         opt_state = torch.load(opt_path)
@@ -92,8 +92,8 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
             i["structures"]["hidden_channels"] = [groups*j for j in i["structures"]["hidden_channels"]]
 
     metadata["model_config"] = config
-    model_path = os.path.join(checkpoint_path, f"{model_type}_{metadata['last_m']}_{metadata['last_k']}_{hash_dict(config)}.safetensors")
-    opt_path = os.path.join(checkpoint_path, f"{model_type}_{metadata['last_m']}_{metadata['last_k']}_ADAM_{hash_dict(config)}.pt")
+    model_path = os.path.join(checkpoint_path, f"{model_type}_{metadata['last_m']+1}_{metadata['last_k']+1}_{hash_dict(config)}.safetensors")
+    opt_path = os.path.join(checkpoint_path, f"{model_type}_{metadata['last_m']+1}_{metadata['last_k']+1}_ADAM_{hash_dict(config)}.pt")
     with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(model_type)}.json"), "w") as f:
         json.dump(metadata, f)
     st.save_model(model, model_path)
@@ -134,8 +134,8 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     model_stream = torch.cuda.Stream()
 
 
-    for m in range(metadata["last_m"]+1, len(lambda_m)):
-        for k in range(metadata["last_k"]+1, K):
+    for m in range(metadata["last_m"], len(lambda_m)):
+        for k in range(metadata["last_k"], K):
             train_dataloader, validation_dataloader = get_k_fold_data_loader(ds, k, batchsize=local_batch_size)
 
             model, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run, metadata, num_classes-1)
@@ -146,11 +146,11 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 opt.load_state_dict(opt_state)
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, patience=5)
 
-            for e in range(metadata["last_epoch"]+1, EPOCHS):
+            for e in range(metadata["last_epoch"], EPOCHS):
                 model.train()
                 total_loss = 0
                 with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
-                    for i, (coarse, dif) in enumerate(train_dataloader):
+                    for coarse, dif in train_dataloader:
                         coarse, dif = coarse.to(device), dif.to(device)
                         with torch.cuda.stream(mask_stream):
                             mask = get_mask(coarse, seg_model, [lambda_m[m]])
@@ -192,11 +192,13 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                 scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
                 metadata["best_loss"], metadata["last_epoch"] = min(metadata["best_loss"], total_loss/(len(validation_dataloader)*local_batch_size)), e
                 save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
-            metadata["last_loss"], metadata["best_loss"], metadata["last_k"], metadata["last_epoch"] = metadata["last_loss"] + metadata["best_loss"], 1e4, k, -1
+            metadata["last_loss"], metadata["last_k"] = metadata["last_loss"] + metadata["best_loss"], k
             save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
+            metadata["best_loss"], metadata["last_epoch"] = 1e4, 0
         metadata["m_losses"].append(metadata["last_loss"])
-        metadata["last_loss"], metadata["last_m"], metadata["last_k"] = 0, m, -1
+        metadata["last_m"] = m
         save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
+        metadata["last_loss"], metadata["last_k"] = 0, 0   
     logger.log(f"Cross Validation Loss for m={lambda_m} are {metadata['m_losses']}")
 
         
