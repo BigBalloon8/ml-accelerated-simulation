@@ -52,6 +52,11 @@ def downsample_staggered_velocity_component(u, direction: int, factor: int=16):
     block_size = tuple(1 if j == direction else factor for j in range(u.ndim))
     return block_reduce(w, block_size, torch.mean)
 
+def k_fold_split(filename, K=5):
+    dataset = KolmogrovFlowData(filename) 
+    kfold = random_split(dataset, [round(1/K,2) for i in range(K)])
+    return kfold
+
 
 class KolmogrovFlowData(Dataset):
     def __init__(self, data_dir):
@@ -111,3 +116,22 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefe
     )
     return train_loader, validation_loader
 
+
+def get_k_fold_data_loader(kfold_data:list, index:int, batchsize=32, num_workers=8, prefetch_factor=2):
+    val_ds = kfold_data.pop(index)
+    validation_loader = DataLoader(
+        val_ds,
+        batch_size=batchsize,
+        shuffle=False,
+        #num_workers=0,
+        pin_memory=True)
+    train_loader = DataLoader(
+        torch.cat(kfold_data, dim=0), 
+        batch_size=batchsize, 
+        shuffle=True, 
+        num_workers=num_workers, 
+        drop_last=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=True) 
+    return train_loader, validation_loader
+        

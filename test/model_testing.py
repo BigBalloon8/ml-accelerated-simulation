@@ -46,4 +46,5 @@ def class_accuracy(logits, dif_labels, classes=list(range(2, 6))):
     return acc
 
 #print(get_classes([2,3,4]))
-print(np.linspace(0.1, 100, 999, endpoint=False))
+#print(np.linspace(0.1, 100, 999, endpoint=False))
+print(list(np.arange(0,100, 5)/100))

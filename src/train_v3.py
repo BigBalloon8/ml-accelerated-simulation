@@ -10,7 +10,6 @@ import os
 from typing import Tuple
 import random
 import hashlib
-import numpy as np
 
 from data.dataloader import get_kolomogrov_flow_data_loader
 from models import buildModel
