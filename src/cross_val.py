@@ -39,8 +39,12 @@ def get_segment_model(name, config_file, checkpoint_path):
         config = json.load(f)
 
     model_base = buildModel(config)
-    model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.safetensors")
-    model_weights = st.load_file(model_path)
+    try:
+        model_path = os.path.join(checkpoint_path[:-11], f"{name}_{hash_dict(config)}_seg.safetensors")
+        model_weights = st.load_file(model_path)
+    except(FileNotFoundError):
+        model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.safetensors")
+        model_weights = st.load_file(model_path)
     model_base.load_state_dict(model_weights)
     return model_base
 
