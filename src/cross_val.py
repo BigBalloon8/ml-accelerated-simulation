@@ -105,7 +105,7 @@ def get_mask(x, segment_model, classes:list):
     with torch.no_grad():
         #classes = get_classes(num_classes)
         out = mask_from_classes(segment_model(x), classes)
-        return [out == i for i in range(1, len(classes))]
+        return [out == i for i in range(1, len(classes) + 1)]
 
     
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config, num_classes:int, K:int):
@@ -190,17 +190,14 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                             pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
                 logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader))}")
                 scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
-                metadata["best_loss"] = min(metadata["best_loss"], total_loss/(len(validation_dataloader)*local_batch_size))
-                metadata["last_epoch"] = e
+                metadata["best_loss"], metadata["last_epoch"] = min(metadata["best_loss"], total_loss/(len(validation_dataloader)*local_batch_size)), e
                 save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
-            metadata["last_loss"] += metadata["best_loss"]
-            metadata["best_loss"] = 1e4
-            metadata["last_k"] = k
+            metadata["last_loss"], metadata["best_loss"], metadata["last_k"], metadata["last_epoch"] = metadata["last_loss"] + metadata["best_loss"], 1e4, k, -1
             save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
         metadata["m_losses"].append(metadata["last_loss"])
-        metadata["last_loss"] = 0
-        metadata["last_m"] = m
+        metadata["last_loss"], metadata["last_m"], metadata["last_k"] = 0, m, -1
         save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
+    logger.log(f"Cross Validation Loss for m={lambda_m} are {metadata["m_losses"]}")
 
         
 
