@@ -190,7 +190,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
                             pbar.set_description(f"Epoch {e+1} Validation Loss: {loss.item():.8f}")
                 logger.log(f"Validation Loss at Epoch {e+1}: {total_loss/(len(validation_dataloader))}")
                 scheduler.step(total_loss/(len(validation_dataloader)*local_batch_size))
-                metadata["best_loss"], metadata["last_epoch"] = min(metadata["best_loss"], total_loss/(len(validation_dataloader)*local_batch_size)), e
+                metadata["best_loss"], metadata["last_epoch"] = min(metadata["best_loss"], total_loss/(len(validation_dataloader))), e
                 save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
             metadata["last_loss"], metadata["last_k"] = metadata["last_loss"] + metadata["best_loss"], k
             save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
