@@ -66,7 +66,7 @@ def get_model(name:str, config_file, checkpoint_path, logger, new_run, metadata,
             i["structures"]["in_channels"] *= groups
             i["structures"]["out_channels"] *= groups
             i["structures"]["hidden_channels"] = [groups*j for j in i["structures"]["hidden_channels"]]
-    logger.log(f"Model Config: {config}")
+    logger.log(f"m={metadata['last_m']+1} k={metadata['last_k']+1} Model Config: {config}")
 
     model_base = buildModel(config)
     

@@ -118,15 +118,14 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefe
 
 
 def get_k_fold_data_loader(kfold_data:list, index:int, batchsize=32, num_workers=8, prefetch_factor=2):
-    val_ds = kfold_data.pop(index)
     validation_loader = DataLoader(
-        val_ds,
+        kfold_data[index],
         batch_size=batchsize,
         shuffle=False,
         #num_workers=0,
         pin_memory=True)
     train_loader = DataLoader(
-        ConcatDataset(kfold_data), 
+        ConcatDataset(kfold_data[:index] + kfold_data[index+1:]), 
         batch_size=batchsize, 
         shuffle=True, 
         num_workers=num_workers, 
