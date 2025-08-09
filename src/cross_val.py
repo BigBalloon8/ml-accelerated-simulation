@@ -37,10 +37,10 @@ def get_percentiles(num_tiles:10|25|100|1000=10):
 def get_segment_model(name, config_file, checkpoint_path):
     with open(config_file, "r") as f:
         config = json.load(f)
-
     model_base = buildModel(config)
+
     try:
-        model_path = os.path.join(checkpoint_path[:-11], f"{name}_{hash_dict(config)}_seg.safetensors")
+        model_path = os.path.join(os.path.dirname(checkpoint_path), f"{name}_{hash_dict(config)}_seg.safetensors")
         model_weights = st.load_file(model_path)
     except(FileNotFoundError):
         model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.safetensors")
