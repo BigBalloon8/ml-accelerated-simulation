@@ -197,7 +197,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         metadata["m_losses"].append(metadata["last_loss"])
         metadata["last_loss"], metadata["last_m"], metadata["last_k"] = 0, m, -1
         save_model(model, opt, model_type, checkpoint_path, model_config, metadata, num_classes-1)
-    logger.log(f"Cross Validation Loss for m={lambda_m} are {metadata["m_losses"]}")
+    logger.log(f"Cross Validation Loss for m={lambda_m} are {metadata['m_losses']}")
 
         
 
