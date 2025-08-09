@@ -135,7 +135,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
 
     for m in range(metadata["last_m"]+1, len(lambda_m)):
-        for k in range(metadata["last_k"]+1, len(K)):
+        for k in range(metadata["last_k"]+1, K):
             train_dataloader, validation_dataloader = get_k_fold_data_loader(ds, k, batchsize=local_batch_size)
 
             model, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run, metadata, num_classes-1)

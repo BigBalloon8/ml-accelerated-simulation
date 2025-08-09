@@ -1,4 +1,4 @@
-from torch.utils.data import Dataset, DataLoader, random_split
+from torch.utils.data import Dataset, DataLoader, random_split, ConcatDataset
 import torch
 import torch.utils._pytree as pytree
 
@@ -126,7 +126,7 @@ def get_k_fold_data_loader(kfold_data:list, index:int, batchsize=32, num_workers
         #num_workers=0,
         pin_memory=True)
     train_loader = DataLoader(
-        torch.cat(kfold_data, dim=0), 
+        ConcatDataset(kfold_data), 
         batch_size=batchsize, 
         shuffle=True, 
         num_workers=num_workers, 
