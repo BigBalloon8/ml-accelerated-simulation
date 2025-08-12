@@ -178,10 +178,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     config = {
         "cl":tune.quniform(0, 1, 0.001),        
     }
-    search = AxSearch(
-        metric="loss",
-        mode="min",
-    )
+    search = AxSearch()
     scheduler = schedulers.ASHAScheduler(
         time_attr="training_iteration",
         metric="loss",
@@ -192,8 +189,8 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     )
     tuner = tune.Tuner(
         tune.with_resources(tune.with_parameters(partial(train_model, **kwargs)), resources={"gpu":1}),
-        tune_config=tune.TuneConfig(metric="loss", mode="min", search_alg=search, scheduler=scheduler, num_samples=num_samples, gpus_per_trial=0.25),
-        run_config=tune.RunConfig(name="cutoff_tuning", local_dir=checkpoint_path),
+        tune_config=tune.TuneConfig(metric="loss", mode="min", search_alg=search, scheduler=scheduler, num_samples=num_samples),
+        run_config=tune.RunConfig(name=model_type, storage_path=checkpoint_path),
         param_space=config,
     )
 
