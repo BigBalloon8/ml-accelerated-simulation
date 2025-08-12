@@ -107,13 +107,13 @@ def get_mask(x, segment_model, classes:list):
         return [out == i for i in range(1, len(classes) + 1)]
 
     
-def train_model(config:dict, data_path, model_type, model_config, checkpoint_path, new_run, seg_model_name, seg_model_config, logger):
+def train_model(config:dict, data_path, model_type, model_config, checkpoint_path, new_run, seg_model_name, seg_model_config, epochs:int, logger:Logger):
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
     torch.cuda.manual_seed(2025)
     random.seed(2025)
 
-
+    config["cl"] = round(config["cl"], 3)
     batchsize = 32
     gradient_accumulation_steps = 1
     local_batch_size = batchsize // gradient_accumulation_steps
@@ -141,7 +141,8 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
 
     kwargs = {"model":model, "seg_model":seg_model, "device":device, "mask_stream":mask_stream, "model_stream":model_stream, "logger":logger}
 
-    for e in range(metadata["last_epoch"], config["epochs"]):
+    logger.log(f"Percentile: {round(config['cl'], 3)}")
+    for e in range(metadata["last_epoch"], epochs):
         model.train()
         total_loss = 0
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
@@ -176,7 +177,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     logger = Logger(model_type, log_file)
     kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "log_file":log_file, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":140, "logger":logger}
     config = {
-        "cl":tune.quniform(0, 1, 0.001),        
+        "cl":tune.uniform(0.001, 0.999),        
     }
     search = AxSearch()
     scheduler = schedulers.ASHAScheduler(
