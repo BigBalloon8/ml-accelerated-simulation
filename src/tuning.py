@@ -107,13 +107,12 @@ def get_mask(x, segment_model, classes:list):
         return [out == i for i in range(1, len(classes) + 1)]
 
     
-def train_model(config:dict, data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config):
+def train_model(config:dict, data_path, model_type, model_config, checkpoint_path, new_run, seg_model_name, seg_model_config, logger):
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
     torch.cuda.manual_seed(2025)
     random.seed(2025)
 
-    logger = Logger(model_type, log_file)
 
     batchsize = 32
     gradient_accumulation_steps = 1
@@ -174,12 +173,12 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
 
 
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config, num_samples):
-    kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "log_file":log_file, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":140}
+    logger = Logger(model_type, log_file)
+    kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "log_file":log_file, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":140, "logger":logger}
     config = {
-        "cl":tune.choice(get_percentiles(1000)),        
+        "cl":tune.quniform(0, 1, 0.001),        
     }
     search = AxSearch(
-        space=config,
         metric="loss",
         mode="min",
     )
@@ -193,13 +192,16 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     )
     tuner = tune.Tuner(
         tune.with_resources(tune.with_parameters(partial(train_model, **kwargs)), resources={"gpu":1}),
-        metric="loss",
-        mode="min",
-        gpus_per_trial=0.5,
-        num_samples=num_samples,
-        tune_config=tune.TuneConfig(metric="loss", mode="min", search_alg=search, scheduler=scheduler),
+        tune_config=tune.TuneConfig(metric="loss", mode="min", search_alg=search, scheduler=scheduler, num_samples=num_samples, gpus_per_trial=0.25),
+        run_config=tune.RunConfig(name="cutoff_tuning", local_dir=checkpoint_path),
+        param_space=config,
     )
-    tuner.fit()
+
+    results = tuner.fit()
+    best_result = results.get_best_result("loss", "min")
+    logger.log(f"Best trial config: {best_result.config}")
+    logger.log(f"Best trial final validation loss: {best_result.metrics['loss']}")
+    logger.log(f"Best trial final validation accuracy: {best_result.metrics['accuracy']}")
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser() 
