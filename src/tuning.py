@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from ray import tune
 import ray.tune.schedulers as schedulers
-from ray.tune.search.ax import AxSearch
+from ray.tune.search.bayesopt import BayesOptSearch
 
 from functools import partial
 from tqdm import tqdm
@@ -179,14 +179,14 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     config = {
         "cl":tune.uniform(0.001, 0.999),        
     }
-    search = AxSearch()
+    search = BayesOptSearch(random_search_steps=4, patience=10)
     scheduler = schedulers.ASHAScheduler(
-        time_attr="training_iteration",
-        metric="loss",
-        mode="min",
-        max_t=kwargs["epochs"],
-        grace_period=10,
-        reduction_factor=2,
+        #time_attr="training_iteration",
+        #metric="loss",
+        #mode="min",
+        #max_t=kwargs["epochs"],
+        #grace_period=10,
+        #reduction_factor=2,
     )
     tuner = tune.Tuner(
         tune.with_resources(tune.with_parameters(partial(train_model, **kwargs)), resources={"gpu":1}),
