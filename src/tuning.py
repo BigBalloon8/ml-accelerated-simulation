@@ -179,7 +179,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     config = {
         "cl":tune.uniform(0.001, 0.999),        
     }
-    search = BayesOptSearch(random_search_steps=4, patience=10)
+    search = BayesOptSearch(random_state=2025, random_search_steps=4, patience=10, points_to_evaluate=[{"cl": 0.667}])
     scheduler = schedulers.ASHAScheduler(
         #time_attr="training_iteration",
         #metric="loss",
