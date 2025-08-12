@@ -32,7 +32,7 @@ def mask_from_classes(x:torch.Tensor, classes):
 def get_percentiles(num_tiles:10|25|100|1000=1000):
     with open("data/data_percentiles.json", "r") as f:
         data = json.load(f)
-    return torch.tensor(data[f"percentages_{num_tiles}"]) 
+    return data[f"percentages_{num_tiles}"]
 
 def get_segment_model(name, config_file, checkpoint_path):
     with open(config_file, "r") as f:
@@ -176,7 +176,7 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config, num_samples):
     kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "log_file":log_file, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":140}
     config = {
-        "cl":tune.choice(get_percentiles(1000).tolist()),        
+        "cl":tune.choice(get_percentiles(1000)),        
     }
     search = AxSearch(
         space=config,
