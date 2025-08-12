@@ -1,14 +1,12 @@
 import torch
 import torch.nn as nn
 
-from torch_cfd import grids, boundaries
+from torch_cfd import grids
 from torch_cfd.initial_conditions import filtered_velocity_field
 
 from torch_cfd.equations import stable_time_step
 from torch_cfd.fvm import RKStepper, NavierStokes2DFVMProjection
 from torch_cfd.forcings import KolmogorovForcing
-import torch_cfd.finite_differences as fdm
-import torch_cfd.tensor_utils as tensor_utils
 import torch.utils._pytree as pytree
 
 from tqdm import tqdm
@@ -17,11 +15,9 @@ import safetensors.torch as st
 import argparse
 import json
 import os
-from typing import Tuple
 import hashlib
 from functools import partial
 
-from models import buildModel
 from log import Logger
 
 import matplotlib.pyplot as plt
@@ -145,45 +141,15 @@ def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
     return hashlib.sha1(formated_string.encode("utf‑8")).hexdigest()
 
-def get_model(name:str, config_file, checkpoint_path, logger, groups=1)-> Tuple[nn.Module, dict]:
-    with open(config_file, "r") as f:
-        config = json.load(f)
-    
-    if groups > 1:
-        for i in config:
-            i["group"] = groups
-            i["structures"]["in_channels"] *= groups
-            i["structures"]["out_channels"] *= groups
-            i["structures"]["hidden_channels"] = [groups*j for j in i["structures"]["hidden_channels"]]
-    logger.log(f"Model Config: {config}")
 
-    model_base = buildModel(config)
-    
-    if f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path):
-        print(f"Model Found in {checkpoint_path}: {name}_{hash_dict(config)}.safetensors")
-        model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.safetensors")
-        model_weights = st.load_file(model_path)
-        model_base.load_state_dict(model_weights)
-    else:
-        raise FileNotFoundError("Model not found")
-    return model_base
+def mask_from_classes(x:torch.Tensor, classes):
+    binary_masks = [(x>classes[i]).to(torch.int64) for i in range(len(classes))]
+    return torch.sum(torch.stack(binary_masks), dim=0)
 
-def get_segment_model(name, config_file, checkpoint_path):
-    with open(config_file, "r") as f:
-        config = json.load(f)
-
-    num_classes = config[-1]["structures"]["out_channels"]//config[-1]["group"]
-    model_base = buildModel(config)
-    model_path = os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.safetensors")
-    model_weights = st.load_file(model_path)
-    model_base.load_state_dict(model_weights)
-    return model_base, num_classes
-
-def get_mask(x, segment_model, num_classes):
+def get_mask(x, segment_model, classes:list):
     with torch.no_grad():
-        logits = torch.softmax(segment_model(x), dim=1)
-        out = torch.argmax(logits, dim=1, keepdim=True)
-        return [out == i for i in range(1, num_classes)]
+        out = mask_from_classes(segment_model(x), classes)
+        return [out == i for i in range(1, len(classes) + 1)]
 
 def graph_vec_field(x, file):
     Ux = x[0].cpu().numpy()
@@ -210,7 +176,7 @@ def tensor_to_grid(x, grid, grid_variable_vector):
     grid_array_1 = grids.GridVariable(x[1], offset=grid_variable_vector[1].offset, grid=grid, bc=grid_variable_vector[1].bc)
     return grids.GridVariableVector((grid_array_0, grid_array_1))
 
-def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_model_name, seg_model_config):
+def main(config:dict, model:nn.Module, seg_model:nn.Module, device:torch.device, mask_stream:torch.cuda.Stream, model_stream:torch.cuda.Stream, logger:Logger):
     # ---------- Simulation Setup ---------------
     high_res = 1024
     low_res = 64
@@ -219,11 +185,10 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     peak_wavenumber = 4.0
     cfl_safety_factor = 0.5
     viscosity = 1e-3
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
+    torch.cuda.manual_seed(2025)
     diam = 2 * torch.pi
-    logger = Logger(model_type, log_file)
 
 
     full_step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
@@ -240,7 +205,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         max_courant_number=cfl_safety_factor,
         viscosity=viscosity,
     )
-    print(f"Timestep: {full_dt}")
+    #print(f"Timestep: {full_dt}")
     coarse_dt = full_dt*16
 
     v0_full = filtered_velocity_field(
@@ -293,18 +258,8 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     ).to(LC_coarse_grid.device)
 
     #-----------ML setup------------------
-    if not no_segment:
-        seg_model, num_classes = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
-        seg_model.to(device)
-    
-    model = get_model(model_type, model_config, checkpoint_path, logger, groups=num_classes-1)
-    model.to(device)
-    
     input_scale = 7
     output_scale = 0.004482923474868822
-
-    mask_stream = torch.cuda.Stream()
-    model_stream = torch.cuda.Stream()
 
     full_stream = torch.cuda.Stream()
     coarse_stream = torch.cuda.Stream()
@@ -313,14 +268,14 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     v_full = v0_full
 
     #Warmup
-    if not os.path.isfile("/content/drive/MyDrive/checkpoints/inference_warmup.pt"):
+    if not os.path.isfile("/content/inference_warmup.pt"):
         for i in tqdm(range(int(1024)), desc="Warmup"):
             v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
         warmup_states = get_grid_data(v_full)
-        torch.save(warmup_states, "/content/drive/MyDrive/checkpoints/inference_warmup.pt")
+        torch.save(warmup_states, "/content/inference_warmup.pt")
     else:
         print("Warmup States Found")
-        warmup_states = torch.load("/content/drive/MyDrive/checkpoints/inference_warmup.pt")
+        warmup_states = torch.load("/content/inference_warmup.pt")
         v_full = tensor_to_grid(warmup_states, full_grid, v_full)
     #Actual Run
     v_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v_full)
@@ -372,17 +327,16 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
 
             with torch.cuda.stream(model_stream):
                 torch.cuda.current_stream().wait_stream(LC_stream)
-                delta_v = model.forward(coarse_norm.repeat(1, num_classes-1, 1, 1))
+                delta_v = model.forward(coarse_norm.repeat(1, len(config["cl"]), 1, 1))
 
-            if not no_segment:
-                with torch.cuda.stream(mask_stream):
-                    torch.cuda.current_stream().wait_stream(LC_stream)
-                    mask = get_mask(coarse_norm, seg_model, num_classes)
-                    torch.cuda.current_stream().wait_stream(model_stream)
-                    deltas = []
-                    for j in range(len(mask)):
-                        deltas.append(delta_v[:, 2*j:2*(j+1)].masked_fill(~mask[j], 0))
-                    delta_v = torch.sum(torch.stack(deltas), dim=0)
+            with torch.cuda.stream(mask_stream):
+                torch.cuda.current_stream().wait_stream(LC_stream)
+                mask = get_mask(coarse_norm, seg_model, [config["cl"]])
+                torch.cuda.current_stream().wait_stream(model_stream)
+                deltas = []
+                for j in range(len(mask)):
+                    deltas.append(delta_v[:, 2*j:2*(j+1)].masked_fill(~mask[j], 0))
+                delta_v = torch.sum(torch.stack(deltas), dim=0)
 
             torch.cuda.synchronize()
             coarse += delta_v*output_scale
@@ -395,13 +349,13 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             pbar.set_description(f"Control Error: {control_errors[-1]}, LC Error: {LC_errors[-1]}")
     
     st.save_file(inference_steps, "/content/drive/MyDrive/checkpoints/inference_steps.pt")
-    logger.log(f"Final Control Error: {control_errors[-1]}")
-    logger.log(f"Final LC Error: {LC_errors[-1]}")
-    graph_vec_field(coarsened_full[:,0], "full.png")
-    graph_vec_field(v_coarse_tensor[:,0], "coarse.png")
-    graph_vec_field(coarse[0], "LC.png")
-    logger.log(f"Control Errors: {control_errors}")
-    logger.log(f"LC Errors: {LC_errors}")
+    logger.log(f"Final Control Error: {control_errors[-1]} Final LC Error: {LC_errors[-1]}")
+    return control_errors[-1], LC_errors[-1]
+    #graph_vec_field(coarsened_full[:,0], "full.png")
+    #graph_vec_field(v_coarse_tensor[:,0], "coarse.png")
+    #graph_vec_field(coarse[0], "LC.png")
+    #logger.log(f"Control Errors: {control_errors}")
+    #logger.log(f"LC Errors: {LC_errors}")
 
 
 
@@ -409,9 +363,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser() 
     ap.add_argument("--model_type", default="CNN", help="Model to train: [MLP, CNN, KAN, Transformer]")
     ap.add_argument("--model_config", default="./model.config", help="path to model config")
-    ap.add_argument("--checkpoint_path", default="/content/drive/MyDrive/checkpoints/validation", help="path to model config")
-    ap.add_argument("--log_file", default="/content/drive/MyDrive/logs/inference.log", help="path to log file") ##
-    ap.add_argument("--no_segment", action="store_true")
+    ap.add_argument("--checkpoint_path", default=".", help="path to model config")
+    ap.add_argument("--log_file", default="/content/drive/MyDrive/logs/inference.log", help="path to log file")
     ap.add_argument("--seg_model_name", default="seg_v3_10layers", help="segment model name") 
     ap.add_argument("--seg_model_config", default="models/configs/fullmodels/segnet_v3.json", help="segment model config")
     with torch.inference_mode():

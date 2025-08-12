@@ -94,7 +94,7 @@ class KolmogrovFlowData(Dataset):
         return coarse, dif
 
 
-def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefetch_factor=2):
+def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefetch_factor=2, train_only=False):
     dataset = KolmogrovFlowData(filename)
     train_ds, val_ds = random_split(dataset, [0.8,0.2])
     train_loader = DataLoader(
@@ -107,6 +107,8 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefe
         prefetch_factor=prefetch_factor,
         persistent_workers=True
         )
+    if train_only:
+        return train_loader
     validation_loader = DataLoader(
         val_ds,
         batch_size=batchsize,
@@ -117,13 +119,8 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefe
     return train_loader, validation_loader
 
 
-def get_k_fold_data_loader(kfold_data:list, index:int, batchsize=32, num_workers=8, prefetch_factor=2):
-    validation_loader = DataLoader(
-        kfold_data[index],
-        batch_size=batchsize,
-        shuffle=False,
-        #num_workers=0,
-        pin_memory=True)
+def get_k_fold_data_loader(kfold_data:list, index:int, batchsize=32, num_workers=8, prefetch_factor=2, train_only=False):
+    
     train_loader = DataLoader(
         ConcatDataset(kfold_data[:index] + kfold_data[index+1:]), 
         batch_size=batchsize, 
@@ -132,5 +129,13 @@ def get_k_fold_data_loader(kfold_data:list, index:int, batchsize=32, num_workers
         drop_last=True,
         prefetch_factor=prefetch_factor,
         persistent_workers=True) 
+    if train_only:
+        return train_loader
+    validation_loader = DataLoader(
+        kfold_data[index],
+        batch_size=batchsize,
+        shuffle=False,
+        #num_workers=0,
+        pin_memory=True)
     return train_loader, validation_loader
         

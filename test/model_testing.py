@@ -48,5 +48,7 @@ def class_accuracy(logits, dif_labels, classes=list(range(2, 6))):
 #print(get_classes([2,3,4]))
 #print(np.linspace(0.1, 100, 999, endpoint=False))
 A = {"a":1, "b":2, "c":3}
-A["a"], A["b"] = 10, 20
-print(A)
+def test(a, b, c, d, e):
+    print(a, b, c, d, e)
+
+test(d=10, e= 20, **A)
