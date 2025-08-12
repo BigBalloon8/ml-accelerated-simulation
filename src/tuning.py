@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from ray import tune
 import ray.tune.schedulers as schedulers
-import ray.tune.search.ax as ax
+from ray.tune.search.ax import AxSearch
 
 from functools import partial
 from tqdm import tqdm
@@ -176,9 +176,9 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config, num_samples):
     kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "log_file":log_file, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":140}
     config = {
-        "cl":tune.quniform(0, 1, 0.001),        
+        "cl":tune.choice(get_percentiles(1000).tolist()),        
     }
-    search = ax.AxSearch(
+    search = AxSearch(
         space=config,
         metric="loss",
         mode="min",
