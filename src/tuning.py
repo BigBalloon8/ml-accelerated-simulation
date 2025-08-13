@@ -144,7 +144,7 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
     kwargs = {"model":model, "seg_model":seg_model, "device":device, "mask_stream":mask_stream, "model_stream":model_stream, "logger":logger}
 
     logger.log(f"Percentile: {round(config['cl'], 3)}")
-    for e in range(metadata["last_epoch"], epochs):
+    for e in range(epochs):
         model.train()
         total_loss = 0
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
@@ -171,23 +171,23 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
             _, lc_error = infer(config, **kwargs)
         logger.log(f"LC Error at Epoch {e+1}: {lc_error}")
         scheduler.step(lc_error*local_batch_size)
-        metadata["last_epoch"], metadata["metrics"]["loss"] = e, lc_error
+        metadata["metrics"]["loss"] = lc_error
         save_model(model, opt, model_type, checkpoint_path, model_config, metadata) #fix grouping
 
 
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config, num_samples):
     logger = Logger(model_type, log_file)
-    kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":140, "logger":logger}
+    kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":100, "logger":logger}
     config = {
         "cl":tune.quniform(0.001, 0.999, 0.001),        
     }
-    #search = BayesOptSearch()#random_state=2025, random_search_steps=4, patience=10, points_to_evaluate=[{"cl": 0.667}]
+    #search = BayesOptSearch()#random_state=2025, random_search_steps=4, patience=5, points_to_evaluate=[{"cl": 0.667}]
     scheduler = schedulers.ASHAScheduler(
         time_attr="training_iteration",
         metric="loss",
         mode="min",
         max_t=kwargs["epochs"],
-        grace_period=10,
+        grace_period=5,
         reduction_factor=2,
     )
     tuner = tune.Tuner(
