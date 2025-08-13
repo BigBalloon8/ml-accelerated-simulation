@@ -118,6 +118,11 @@ def get_mask(x, segment_model, classes:list):
 
     
 def train_model(config:dict, data_path, model_type, model_config, checkpoint_path, new_run, seg_model_name, seg_model_config, epochs:int, logger:Logger):
+    torch.set_default_dtype(torch.float64)
+    torch.manual_seed(2025)
+    torch.cuda.manual_seed(2025)
+    random.seed(2025)
+
     #config["cl"] = round(config["cl"], 3)
     batchsize = 32
     gradient_accumulation_steps = 1
@@ -179,11 +184,6 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
 
 
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config, num_samples):
-    torch.set_default_dtype(torch.float64)
-    torch.manual_seed(2025)
-    torch.cuda.manual_seed(2025)
-    random.seed(2025)
-    
     logger = Logger(model_type, log_file)
 
     kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":100, "logger":logger}
