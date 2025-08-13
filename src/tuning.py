@@ -49,13 +49,13 @@ def get_segment_model(name, config_file, checkpoint_path):
     model_base.load_state_dict(model_weights)
     return model_base
 
-def load_metadata(name:str, checkpoint_path, new_run):
-    if f"{name}_{hash_dict(name)}.json" in os.listdir(checkpoint_path) and not new_run:
-        print(f"Metadata Found in {checkpoint_path}: {name}_{hash_dict(name)}.json")
-        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(name)}.json"), "r") as f:
+def load_metadata(name:str, checkpoint_path, new_run, cl):
+    if f"{name}_{cl}_{hash_dict(name)}.json" in os.listdir(checkpoint_path) and not new_run:
+        print(f"Metadata Found in {checkpoint_path}: {name}_{cl}_{hash_dict(name)}.json")
+        with open(os.path.join(checkpoint_path, f"{name}_{cl}_{hash_dict(name)}.json"), "r") as f:
             metadata = json.load(f)
     else:
-        metadata = {"last_epoch":0, "metrics":{}}
+        metadata = {"last_epoch":0, "metrics":{}, "percentile":cl, "best_loss":100}
     return metadata
 
 def get_model(name:str, config_file, checkpoint_path, logger, new_run, metadata, groups=1)-> Tuple[nn.Module, Any]:
@@ -94,10 +94,19 @@ def save_model(model:nn.Module, opt:torch.optim.Optimizer, model_type, checkpoin
     metadata["model_config"] = config
     model_path = os.path.join(checkpoint_path, f"{model_type}_{metadata['percentile']}_{hash_dict(config)}.safetensors")
     opt_path = os.path.join(checkpoint_path, f"{model_type}_{metadata['percentile']}_ADAM_{hash_dict(config)}.pt")
-    with open(os.path.join(checkpoint_path, f"{model_type}_{hash_dict(model_type)}.json"), "w") as f:
+    with open(os.path.join(checkpoint_path, f"{model_type}_{metadata['percentile']}_{hash_dict(model_type)}.json"), "w") as f:
         json.dump(metadata, f)
     st.save_model(model, model_path)
     torch.save(opt.state_dict(), opt_path)
+    if "overview.json" in os.listdir(checkpoint_path):
+        print("Overview file found")
+        with open(os.path.join(checkpoint_path, f"overview.json"), "r") as f:
+            overview = json.load(f)
+        overview[f'{metadata["percentile"]}'] = metadata["best_loss"]
+    else:
+        overview = {f'{metadata["percentile"]}': metadata["best_loss"]}
+    with open(os.path.join(checkpoint_path, f"overview.json"), "w") as f:
+        json.dump(overview, f)
     tune_checkpoint = tune.Checkpoint.from_directory(checkpoint_path)
     tune.report(metadata["metrics"], checkpoint=tune_checkpoint)
     #print(opt.state_dict())
@@ -109,18 +118,12 @@ def get_mask(x, segment_model, classes:list):
 
     
 def train_model(config:dict, data_path, model_type, model_config, checkpoint_path, new_run, seg_model_name, seg_model_config, epochs:int, logger:Logger):
-    torch.set_default_dtype(torch.float64)
-    torch.manual_seed(2025)
-    torch.cuda.manual_seed(2025)
-    random.seed(2025)
-
     #config["cl"] = round(config["cl"], 3)
     batchsize = 32
     gradient_accumulation_steps = 1
     local_batch_size = batchsize // gradient_accumulation_steps
 
-    metadata = load_metadata(model_type, checkpoint_path, new_run)
-    metadata["percentile"] = config["cl"]
+    metadata = load_metadata(model_type, checkpoint_path, new_run, config["cl"])
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -144,7 +147,7 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
     kwargs = {"model":model, "seg_model":seg_model, "device":device, "mask_stream":mask_stream, "model_stream":model_stream, "logger":logger}
 
     logger.log(f"Percentile: {round(config['cl'], 3)}")
-    for e in range(epochs):
+    for e in range(metadata["last_epoch"], epochs):
         model.train()
         total_loss = 0
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
@@ -171,12 +174,18 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
             _, lc_error = infer(config, **kwargs)
         logger.log(f"LC Error at Epoch {e+1}: {lc_error}")
         scheduler.step(lc_error*local_batch_size)
-        metadata["metrics"]["loss"] = lc_error
+        metadata["metrics"]["loss"], metadata["best_loss"] = lc_error, min(metadata["best_loss"], lc_error)
         save_model(model, opt, model_type, checkpoint_path, model_config, metadata) #fix grouping
 
 
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config, num_samples):
+    torch.set_default_dtype(torch.float64)
+    torch.manual_seed(2025)
+    torch.cuda.manual_seed(2025)
+    random.seed(2025)
+    
     logger = Logger(model_type, log_file)
+
     kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":100, "logger":logger}
     config = {
         "cl":tune.quniform(0.001, 0.999, 0.001),        
