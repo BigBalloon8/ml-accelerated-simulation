@@ -327,7 +327,7 @@ def main(config:dict, model:nn.Module, seg_model:nn.Module, device:torch.device,
 
             with torch.cuda.stream(model_stream):
                 torch.cuda.current_stream().wait_stream(LC_stream)
-                delta_v = model.forward(coarse_norm.repeat(1, len(config["cl"]), 1, 1))
+                delta_v = model.forward(coarse_norm.repeat(1, 1, 1, 1)) #fix grouping (1, group-1, 1, 1)
 
             with torch.cuda.stream(mask_stream):
                 torch.cuda.current_stream().wait_stream(LC_stream)
