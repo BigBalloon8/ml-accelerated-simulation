@@ -196,7 +196,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         metric="loss",
         mode="min",
         max_t=kwargs["epochs"],
-        grace_period=5,
+        grace_period=2,
         reduction_factor=2,
     )
     tuner = tune.Tuner(
