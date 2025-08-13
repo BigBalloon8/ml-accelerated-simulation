@@ -177,7 +177,7 @@ def train_model(config:dict, data_path, model_type, model_config, checkpoint_pat
 
 def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config, num_samples):
     logger = Logger(model_type, log_file)
-    kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "log_file":log_file, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":140, "logger":logger}
+    kwargs = {"data_path":data_path, "model_type":model_type, "model_config":model_config, "checkpoint_path":checkpoint_path, "new_run":new_run, "seg_model_name":seg_model_name, "seg_model_config":seg_model_config, "epochs":140, "logger":logger}
     config = {
         "cl":tune.quniform(0.001, 0.999, 0.001),        
     }
@@ -192,7 +192,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     )
     tuner = tune.Tuner(
         tune.with_resources(tune.with_parameters(partial(train_model, **kwargs)), resources={"gpu":1}),
-        tune_config=tune.TuneConfig(metric="loss", mode="min", scheduler=scheduler, num_samples=num_samples),#search_alg=search,
+        tune_config=tune.TuneConfig(scheduler=scheduler, num_samples=num_samples),#search_alg=search, metric="loss", mode="min", 
         run_config=tune.RunConfig(name=model_type, storage_path="/tmp/ray_results"),
         param_space=config,
     )
