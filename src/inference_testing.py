@@ -396,9 +396,9 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     
     logger.log(f"Final Control Error: {control_errors[-1]}")
     logger.log(f"Final LC Error: {LC_errors[-1]}")
-    graph_vec_field(coarsened_full[:,0], "full.png")
-    graph_vec_field(v_coarse_tensor[:,0], "coarse.png")
-    graph_vec_field(coarse[0], "LC.png")
+    # graph_vec_field(coarsened_full[:,0], "full.png")
+    # graph_vec_field(v_coarse_tensor[:,0], "coarse.png")
+    # graph_vec_field(coarse[0], "LC.png")
     logger.log(f"Control Errors: {control_errors}")
     logger.log(f"LC Errors: {LC_errors}")
 
