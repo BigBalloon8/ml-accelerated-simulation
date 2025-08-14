@@ -119,7 +119,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
     criterion = nn.MSELoss()
 
     train_dataloader, validation_dataloader = get_kolomogrov_flow_data_loader(data_path, batchsize=local_batch_size)
-    metadata = load_metadata(model_type, checkpoint_path, new_run)
+    metadata = load_metadata(model_type, checkpoint_path, new_run, percentiles)
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
