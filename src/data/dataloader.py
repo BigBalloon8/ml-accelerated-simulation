@@ -111,3 +111,15 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefe
     )
     return train_loader, validation_loader
 
+def get_kolomogrov_flow_data_loader_train_only(filename, batchsize=32, num_workers=8, prefetch_factor=2):
+    dataset = KolmogrovFlowData(filename)
+    return DataLoader(
+        dataset,
+        batch_size=batchsize,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True,
+        drop_last=True,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=True
+        )

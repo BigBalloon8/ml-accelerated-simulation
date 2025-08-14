@@ -176,7 +176,7 @@ def get_mask(x, segment_model):
         logits = torch.softmax(segment_model(x), dim=1)
         return ~(torch.argmax(logits, dim=1, keepdim=True).to(torch.bool))
 
-def graph_vec_field(x, file):
+def graph_vec_field(x, file, cmap="viridis"):
     Ux = x[0].cpu().numpy()
     Uy = x[1].cpu().numpy()
     import numpy as np
@@ -184,7 +184,7 @@ def graph_vec_field(x, file):
     fig, ax = plt.subplots(figsize=(6, 6))
 
     mag = np.sqrt(Ux**2 + Uy**2)
-    im = ax.imshow(mag, cmap='viridis', origin='lower')
+    im = ax.imshow(mag, cmap=cmap, origin='lower')
     plt.colorbar(im, ax=ax, label='Magnitude')
 
     ax.quiver(X, Y, Ux, Uy, color='w',)  # adjust scale for visual clarity
@@ -216,6 +216,11 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     diam = 2 * torch.pi
     logger = Logger(model_type, log_file)
 
+    warmup_path = "/content/inference_warmup.pt"
+    inference_steps_path = "/content/inference_steps.pt"
+    warmup_save_path = "/content/drive/MyDrive/checkpoints/inference_warmup.pt"
+    inference_steps_save_path = "/content/drive/MyDrive/checkpoints/inference_steps.pt"
+
 
     full_step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
     coarse_step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
@@ -234,8 +239,13 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     print(f"Timestep: {full_dt}")
     coarse_dt = full_dt*16
 
+    if not os.path.isfile(warmup_path):
+        its = 16
+    else:
+        its = 1
+
     v0_full = filtered_velocity_field(
-        full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
+        full_grid, max_velocity, peak_wavenumber, iterations=its, random_state=42,
         device=device, batch_size=64)
 
     v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
@@ -303,14 +313,14 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     v_full = v0_full
 
     #Warmup
-    if not os.path.isfile("/content/drive/MyDrive/checkpoints/inference_warmup.pt"):
+    if not os.path.isfile(warmup_path):
         for i in tqdm(range(int(1024)), desc="Warmup"):
             v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
         warmup_states = get_grid_data(v_full)
-        torch.save(warmup_states, "/content/drive/MyDrive/checkpoints/inference_warmup.pt")
+        torch.save(warmup_states, warmup_save_path)
     else:
         print("Warmup States Found")
-        warmup_states = torch.load("/content/drive/MyDrive/checkpoints/inference_warmup.pt")
+        warmup_states = torch.load(warmup_path)
         v_full = tensor_to_grid(warmup_states, full_grid, v_full)
     #Actual Run
     v_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v_full)
@@ -324,8 +334,8 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     
     inference_precomputed = True
 
-    if os.path.isfile("/content/drive/MyDrive/checkpoints/inference_steps.pt"):
-        inference_steps = st.load_file("/content/drive/MyDrive/checkpoints/inference_steps.pt")
+    if os.path.isfile(inference_steps_path):
+        inference_steps = st.load_file(inference_steps_path)
         if len(inference_steps)//2 != int(1/coarse_dt):
             inference_precomputed = False
             inference_steps = {}
@@ -381,7 +391,9 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             pbar.update(1)
             pbar.set_description(f"Control Error: {control_errors[-1]}, LC Error: {LC_errors[-1]}")
     
-    st.save_file(inference_steps, "/content/drive/MyDrive/checkpoints/inference_steps.pt")
+    if not inference_precomputed:
+        st.save_file(inference_steps, inference_steps_save_path)
+    
     logger.log(f"Final Control Error: {control_errors[-1]}")
     logger.log(f"Final LC Error: {LC_errors[-1]}")
     graph_vec_field(coarsened_full[:,0], "full.png")
