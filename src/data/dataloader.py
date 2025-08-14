@@ -96,6 +96,19 @@ class KolmogrovFlowData(Dataset):
 
 def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefetch_factor=2, train_only=False):
     dataset = KolmogrovFlowData(filename)
+    if train_only:
+        train_loader = DataLoader(
+            dataset,
+            batch_size=batchsize,
+            shuffle=True,
+            num_workers=num_workers,
+            pin_memory=True,
+            drop_last=True,
+            prefetch_factor=prefetch_factor,
+            persistent_workers=True
+        )
+        return train_loader
+    
     train_ds, val_ds = random_split(dataset, [0.8,0.2])
     train_loader = DataLoader(
         train_ds,
@@ -107,8 +120,6 @@ def get_kolomogrov_flow_data_loader(filename, batchsize=32, num_workers=8, prefe
         prefetch_factor=prefetch_factor,
         persistent_workers=True
         )
-    if train_only:
-        return train_loader
     validation_loader = DataLoader(
         val_ds,
         batch_size=batchsize,
