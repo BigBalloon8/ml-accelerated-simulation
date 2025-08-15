@@ -406,6 +406,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     # graph_vec_field(coarse[0], "LC.png")
     #logger.log(f"Control Errors: {control_errors}")
     #logger.log(f"LC Errors: {LC_errors}")
+    return LC_errors[-1]
 
 
 

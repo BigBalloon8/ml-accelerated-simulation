@@ -132,7 +132,8 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})   
 
         with torch.inference_mode():
-            inference_main(model_type, model_config, checkpoint_path, log_file, False, seg_model_name, seg_model_config)
+            LC_error = inference_main(model_type, model_config, checkpoint_path, log_file, False, seg_model_name, seg_model_config)
+        scheduler.step(LC_error)
 
          
 
