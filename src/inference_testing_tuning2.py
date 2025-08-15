@@ -188,7 +188,7 @@ def get_model(name:str, config_file, checkpoint_path, logger, percentiles)-> Tup
             i["structures"]["in_channels"] *= len(percentiles)
             i["structures"]["out_channels"] *= groups
             i["structures"]["hidden_channels"] = [groups*j for j in i["structures"]["hidden_channels"]]
-    logger.log(f"Model Config: {config}")
+    logger.log(f"{percentiles[-1]} Model Config: {config}")
 
     model_base = buildModel(config)
     
