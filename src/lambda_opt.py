@@ -17,7 +17,7 @@ def has_been_trained_seg(name:str, config_file, checkpoint_path):
 
     model_exists = f"{name}_{hash_dict(config)}_seg.safetensors" in os.listdir(checkpoint_path)
     if model_exists:
-        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.json"), "w") as f:
+        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}_seg.json"), "r") as f:
             metadata = json.load(f)
         return metadata["last_epoch"] >= 99
     else:
@@ -29,7 +29,7 @@ def has_been_trained(name:str, config_file, checkpoint_path):
 
     model_exists =  f"{name}_{hash_dict(config)}.safetensors" in os.listdir(checkpoint_path)
     if model_exists:
-        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.json"), "w") as f:
+        with open(os.path.join(checkpoint_path, f"{name}_{hash_dict(config)}.json"), "r") as f:
             metadata = json.load(f)
         return metadata["last_epoch"] >= 99
     else:

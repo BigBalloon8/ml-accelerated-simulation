@@ -20,6 +20,7 @@ import os
 from typing import Tuple
 import hashlib
 from functools import partial
+import pickle
 
 from models import buildModel
 from log import Logger
@@ -220,6 +221,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     inference_steps_path = "/content/inference_steps.pt"
     warmup_save_path = "/content/drive/MyDrive/checkpoints/inference_warmup.pt"
     inference_steps_save_path = "/content/drive/MyDrive/checkpoints/inference_steps.pt"
+    v0_path = "/content/v0_full.pickle"
 
 
     full_step_fn = RKStepper.from_method(method="classic_rk4", requires_grad=False, dtype=torch.float64)
@@ -236,18 +238,19 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         max_courant_number=cfl_safety_factor,
         viscosity=viscosity,
     )
-    print(f"Timestep: {full_dt}")
+
     coarse_dt = full_dt*16
 
-    if not os.path.isfile(warmup_path):
-        its = 16
+    if not os.path.isfile(v0_path):
+        v0_full = filtered_velocity_field(
+            full_grid, max_velocity, peak_wavenumber, iterations=16, random_state=42,
+            device=device, batch_size=64)
+        with open(v0_path, "wb") as f:
+            pickle.dump(v0_full, f)
     else:
-        its = 1
-
-    v0_full = filtered_velocity_field(
-        full_grid, max_velocity, peak_wavenumber, iterations=its, random_state=42,
-        device=device, batch_size=64)
-
+        with open(v0_path, "rb") as f:
+            v0_full = pickle.load(f)
+    
     v0_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v0_full)
     v0_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v0_full)
 
@@ -322,6 +325,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         print("Warmup States Found")
         warmup_states = torch.load(warmup_path)
         v_full = tensor_to_grid(warmup_states, full_grid, v_full)
+    
     #Actual Run
     v_coarse = downsample_staggered_velocity(full_grid, coarse_grid, v_full)
     v_LC_coarse = downsample_staggered_velocity(full_grid, LC_coarse_grid, v_full)
@@ -345,7 +349,7 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         inference_precomputed = False
         inference_steps = {}
 
-    with tqdm(total=int(1/coarse_dt),desc=f"Control Error: NaN, LC Error: NaN") as pbar:
+    with tqdm(total=int(1/coarse_dt), desc=f"Control Error: NaN, LC Error: NaN") as pbar:
         for i in range(int(1/coarse_dt)):
             if not inference_precomputed:
                 with torch.cuda.stream(full_stream):
@@ -390,17 +394,19 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             
             pbar.update(1)
             pbar.set_description(f"Control Error: {control_errors[-1]}, LC Error: {LC_errors[-1]}")
-    
+        
+        pbar.close()
     if not inference_precomputed:
         st.save_file(inference_steps, inference_steps_save_path)
     
     logger.log(f"Final Control Error: {control_errors[-1]}")
     logger.log(f"Final LC Error: {LC_errors[-1]}")
-    graph_vec_field(coarsened_full[:,0], "full.png")
-    graph_vec_field(v_coarse_tensor[:,0], "coarse.png")
-    graph_vec_field(coarse[0], "LC.png")
-    logger.log(f"Control Errors: {control_errors}")
-    logger.log(f"LC Errors: {LC_errors}")
+    # graph_vec_field(coarsened_full[:,0], "full.png")
+    # graph_vec_field(v_coarse_tensor[:,0], "coarse.png")
+    # graph_vec_field(coarse[0], "LC.png")
+    #logger.log(f"Control Errors: {control_errors}")
+    #logger.log(f"LC Errors: {LC_errors}")
+    return LC_errors[-1]
 
 
 

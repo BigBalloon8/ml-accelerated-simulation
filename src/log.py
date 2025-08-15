@@ -15,6 +15,9 @@ class Logger:
         """
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.INFO)
+
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
         
         formatter = logging.Formatter(
             fmt="%(asctime)s|%(name)s|%(message)s",
@@ -40,9 +43,6 @@ class Logger:
             msg (str): message to log
         """
         self.logger.info(msg)
-    
-    def __del__(self):
-        self.logger.info("Run Complete \n\n")
 
 
 if __name__ == "__main__":
