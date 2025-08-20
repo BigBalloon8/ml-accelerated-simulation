@@ -70,7 +70,7 @@ def get_mask(x, segment_model):
         logits = torch.softmax(segment_model(x), dim=1)
         return torch.argmax(logits, dim=1, keepdim=True).to(torch.bool)
     
-def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, seg_model_name, seg_model_config):
+def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run, no_segment, seg_model_name, seg_model_config):
     torch.set_default_dtype(torch.float64)
     torch.manual_seed(2025)
     random.seed(2025)
@@ -88,9 +88,11 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
     model, metadata, opt_state = get_model(model_type, model_config, checkpoint_path, logger, new_run)
     model = model.to(device)
+    
 
-    seg_model = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
-    seg_model.to(device)
+    if not no_segment:
+        seg_model = get_segment_model(seg_model_name, seg_model_config, checkpoint_path)
+        seg_model.to(device)
 
     criterion = nn.MSELoss()
 
@@ -102,8 +104,6 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
 
     #lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR
 
-    mask_stream = torch.cuda.Stream()
-    model_stream = torch.cuda.Stream()
 
     for e in range(metadata["last_epoch"]+1, EPOCHS):
         model.train()
@@ -111,13 +111,11 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                with torch.cuda.stream(mask_stream):
+                pred = model.forward(coarse)
+                if not no_segment:
                     mask = get_mask(coarse, seg_model)
-                with torch.cuda.stream(model_stream):
-                    pred = model.forward(coarse)
-                torch.cuda.synchronize()
-                pred = torch.masked_select(pred, mask)
-                dif = torch.masked_select(dif, mask)
+                    pred = torch.masked_select(pred, mask)
+                    dif = torch.masked_select(dif, mask)
                 loss = criterion.forward(pred, dif)
                 loss.backward()
                 total_loss += loss.item()
@@ -132,7 +130,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         save_model(model, opt, model_type, checkpoint_path, model_config, {"last_epoch":e})   
 
         with torch.inference_mode():
-            LC_error = inference_main(model_type, model_config, checkpoint_path, log_file, False, seg_model_name, seg_model_config)
+            LC_error = inference_main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_model_name, seg_model_config)
         scheduler.step(LC_error)
 
          
@@ -147,6 +145,7 @@ if __name__ == "__main__":
     ap.add_argument("--checkpoint_path", default=".", help="path to model config")
     ap.add_argument("--log_file", default="/content/drive/MyDrive/logs/general.log", help="path to log file")
     ap.add_argument("--new_run", action="store_true")
+    ap.add_argument("--no_segment", action="store_true")
     ap.add_argument("--seg_model_name", default="segment_big", help="segment model name")
     ap.add_argument("--seg_model_config", default="models/configs/fullmodels/segnet.json", help="segment model config")
     main(**ap.parse_args().__dict__)

@@ -94,7 +94,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
         with tqdm(total=len(train_dataloader)*local_batch_size,desc=f"Epoch {e+1} Training Loss: NaN") as pbar:
             for i, (coarse, dif) in enumerate(train_dataloader):
                 coarse, dif = coarse.to(device), dif.to(device)
-                dif_labels = (torch.norm(dif, dim=1)>Lambda/scale).to(torch.int64)
+                dif_labels = (torch.norm(dif, dim=1)>(Lambda/scale)).to(torch.int64)
                 logits = model.forward(coarse)
                 loss = criterion(logits, dif_labels).mean()
                 loss.backward()
@@ -114,7 +114,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file, new_run
             with tqdm(total=len(validation_dataloader)*local_batch_size,desc=f"Epoch {e+1} Validation Loss: NaN") as pbar:
                 for coarse, dif in validation_dataloader:
                     coarse, dif = coarse.to(device), dif.to(device)
-                    dif_labels = (torch.norm(dif, dim=1)>0.50).to(torch.int64)
+                    dif_labels = (torch.norm(dif, dim=1)>(Lambda/scale)).to(torch.int64)
                     logits = model.forward(coarse)
                     loss = criterion(logits, dif_labels).mean()
                     total_loss += loss.item()

@@ -5,6 +5,7 @@ import os
 
 from segmentation_train import main as main_seg
 from train_v3 import main as main_train
+from inference_testing import main as inference_main
 from log import Logger
 
 def hash_dict(x:dict):
@@ -48,6 +49,7 @@ def main(data_path, model_type, model_config, checkpoint_path, log_file):
             main_seg(data_path, model_name, model_config, checkpoint_path, log_file, False, l)
         if not has_been_trained(model_name, model_config, checkpoint_path):
             main_train(data_path, model_name, model_config, checkpoint_path, log_file, False, model_name, model_config)
+        inference_main(model_name, model_config, checkpoint_path, log_file, False, model_name, model_config)
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser() 
