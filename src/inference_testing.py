@@ -8,139 +8,22 @@ from torch_cfd.equations import stable_time_step
 from torch_cfd.fvm import RKStepper, NavierStokes2DFVMProjection
 from torch_cfd.forcings import KolmogorovForcing
 import torch_cfd.finite_differences as fdm
-import torch_cfd.tensor_utils as tensor_utils
-import torch.utils._pytree as pytree
+
 
 from tqdm import tqdm
 import safetensors.torch as st
-
 import argparse
 import json
 import os
 from typing import Tuple
 import hashlib
-from functools import partial
 import pickle
 
 from models import buildModel
 from log import Logger
+from grid_utils import downsample_staggered_velocity, downsample_tensor, get_grid_data, tensor_to_grid
 
 import matplotlib.pyplot as plt
-
-def block_reduce(array, block_size, reduction_fn):
-    new_shape = []
-    for b, s in zip(block_size, array.shape):
-        multiple, residual = divmod(s, b)
-        if residual != 0:
-            raise ValueError('`block_size` must divide `array.shape`;'
-                            f'got {block_size}, {array.shape}.')
-        new_shape += [multiple, b]
-    multiple_axis_reduction_fn = reduction_fn
-    for j in reversed(range(array.ndim)):
-        multiple_axis_reduction_fn = torch.vmap(multiple_axis_reduction_fn, j)
-    return multiple_axis_reduction_fn(array.reshape(new_shape))
-
-
-def _normalize_axis(axis: int, ndim: int) -> int:
-    if not -ndim <= axis < ndim:
-        raise ValueError(f"invalid axis {axis} for ndim {ndim}")
-    if axis < 0:
-        axis += ndim
-    return axis
-
-def slice_along_axis(
-    inputs, axis: int, idx, expect_same_dims: bool = True):
-
-    arrays, tree_def = pytree.tree_flatten(inputs)
-    ndims = set(a.ndim for a in arrays)
-    if expect_same_dims and len(ndims) != 1:
-        raise ValueError(
-            "arrays in `inputs` expected to have same ndims, but have "
-            f"{ndims}. To allow this, pass expect_same_dims=False"
-        )
-    sliced = []
-    for array in arrays:
-        ndim = array.ndim
-        slc = tuple(
-            idx if j == _normalize_axis(axis, ndim) else slice(None)
-            for j in range(ndim)
-        )
-        sliced.append(array[slc])
-    return pytree.tree_unflatten(sliced, tree_def)
-
-def downsample_staggered_velocity_component(u, direction: int, factor: int):
-    w = slice_along_axis(u, direction, slice(factor - 1, None, factor))
-    block_size = tuple(1 if j == direction else factor for j in range(u.ndim))
-    return block_reduce(w, block_size, torch.mean)
-
-
-def downsample_staggered_velocity(
-    source_grid: grids.Grid,
-    destination_grid: grids.Grid,
-    velocity
-):
-    factor = destination_grid.step[0] / source_grid.step[0]
-    result = []
-    for j, u in enumerate(velocity):
-        def downsample(u: grids.GridVariable, direction: int,
-                     factor: int) -> grids.GridVariable:
-            array = torch.vmap(partial(downsample_staggered_velocity_component, direction=direction, factor=round(factor)))(u.data)
-            grid_array = grids.GridVariable(array.squeeze(), offset=u.offset, grid=destination_grid, bc=u.bc)
-            return grid_array
-        result.append(downsample(u, j, round(factor)))
-    return grids.GridVariableVector(tuple(result))
-
-def downsample_tensor(x):
-    def block_reduce(array, block_size, reduction_fn):
-        new_shape = []
-        for b, s in zip(block_size, array.shape):
-            multiple, residual = divmod(s, b)
-            if residual != 0:
-                raise ValueError('`block_size` must divide `array.shape`;'
-                                f'got {block_size}, {array.shape}.')
-            new_shape += [multiple, b]
-        multiple_axis_reduction_fn = reduction_fn
-        for j in reversed(range(array.ndim)):
-            multiple_axis_reduction_fn = torch.vmap(multiple_axis_reduction_fn, j)
-        return multiple_axis_reduction_fn(array.reshape(new_shape))
-
-    def _normalize_axis(axis: int, ndim: int) -> int:
-        if not -ndim <= axis < ndim:
-            raise ValueError(f"invalid axis {axis} for ndim {ndim}")
-        if axis < 0:
-            axis += ndim
-        return axis
-
-    def slice_along_axis(
-        inputs, axis: int, idx, expect_same_dims: bool = True):
-
-        arrays, tree_def = pytree.tree_flatten(inputs)
-        ndims = set(a.ndim for a in arrays)
-        if expect_same_dims and len(ndims) != 1:
-            raise ValueError(
-                "arrays in `inputs` expected to have same ndims, but have "
-                f"{ndims}. To allow this, pass expect_same_dims=False"
-            )
-        sliced = []
-        for array in arrays:
-            ndim = array.ndim
-            slc = tuple(
-                idx if j == _normalize_axis(axis, ndim) else slice(None)
-                for j in range(ndim)
-            )
-            sliced.append(array[slc])
-        return pytree.tree_unflatten(sliced, tree_def)
-
-    def downsample_staggered_velocity_component(u, direction: int, factor: int=16):
-        w = slice_along_axis(u, direction, slice(factor - 1, None, factor))
-        block_size = tuple(1 if j == direction else factor for j in range(u.ndim))
-        return block_reduce(w, block_size, torch.mean)
-
-    factor = round(1024//64)
-    result = []
-    for j, u in enumerate(x):
-        result.append(downsample_staggered_velocity_component(u, j, factor=factor))
-    return torch.stack(result)
 
 def hash_dict(x:dict):
     formated_string = "".join(sorted(json.dumps(x, sort_keys=True)))
@@ -149,7 +32,7 @@ def hash_dict(x:dict):
 def get_model(name:str, config_file, checkpoint_path, logger)-> Tuple[nn.Module, dict]:
     with open(config_file, "r") as f:
         config = json.load(f)
-    logger.log(f"Model Config: {config}")
+    #logger.log(f"Model Config: {config}")
 
     model_base = buildModel(config)
     
@@ -194,13 +77,6 @@ def graph_vec_field(x, file, cmap="viridis"):
 
     plt.savefig(file)
 
-def get_grid_data(x):
-    return torch.stack(x.data)
-
-def tensor_to_grid(x, grid, grid_variable_vector):
-    grid_array_0 = grids.GridVariable(x[0], offset=grid_variable_vector[0].offset, grid=grid, bc=grid_variable_vector[0].bc)
-    grid_array_1 = grids.GridVariable(x[1], offset=grid_variable_vector[1].offset, grid=grid, bc=grid_variable_vector[1].bc)
-    return grids.GridVariableVector((grid_array_0, grid_array_1))
 
 def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_model_name, seg_model_config):
     # ---------- Simulation Setup ---------------
@@ -306,13 +182,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     input_scale = 7
     output_scale = 0.004482923474868822
 
-    mask_stream = torch.cuda.Stream()
-    model_stream = torch.cuda.Stream()
-
-    full_stream = torch.cuda.Stream()
-    coarse_stream = torch.cuda.Stream()
-    LC_stream = torch.cuda.Stream()
-
     v_full = v0_full
 
     #Warmup
@@ -322,7 +191,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         warmup_states = get_grid_data(v_full)
         torch.save(warmup_states, warmup_save_path)
     else:
-        print("Warmup States Found")
         warmup_states = torch.load(warmup_path)
         v_full = tensor_to_grid(warmup_states, full_grid, v_full)
     
@@ -343,8 +211,6 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
         if len(inference_steps)//2 != int(1/coarse_dt):
             inference_precomputed = False
             inference_steps = {}
-        else:
-            print("Instance Steps Found")
     else:
         inference_precomputed = False
         inference_steps = {}
@@ -352,14 +218,11 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
     with tqdm(total=int(1/coarse_dt), desc=f"Control Error: NaN, LC Error: NaN") as pbar:
         for i in range(int(1/coarse_dt)):
             if not inference_precomputed:
-                with torch.cuda.stream(full_stream):
-                    for _ in range(16):
-                        v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
+                for _ in range(16):
+                    v_full,_ = full_step_fn.forward(v_full, full_dt, equation=ns2d_full)
                 
-                with torch.cuda.stream(coarse_stream):
-                    v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
+                v_coarse,_ = coarse_step_fn.forward(v_coarse, coarse_dt, equation=ns2d_coarse)
                 
-                torch.cuda.synchronize()
                 coarsened_full = torch.vmap(downsample_tensor, in_dims=1, out_dims=1)(get_grid_data(v_full)).squeeze()
                 v_coarse_tensor = get_grid_data(v_coarse)
                 inference_steps[f"full_{i}"] = coarsened_full.contiguous()
@@ -367,25 +230,18 @@ def main(model_type, model_config, checkpoint_path, log_file, no_segment, seg_mo
             else:
                 coarsened_full = inference_steps[f"full_{i}"].to(device)
                 v_coarse_tensor = inference_steps[f"coarse_{i}"].to(device)
+                        
             
-            
-            with torch.cuda.stream(LC_stream):
-                v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
-                coarse = get_grid_data(v_LC_coarse).transpose(0,1)
-                coarse_norm = coarse / input_scale
+            v_LC_coarse,_ = LC_coarse_step_fn.forward(v_LC_coarse, coarse_dt, equation=ns2d_LC_coarse)
+            coarse = get_grid_data(v_LC_coarse).transpose(0,1)
+            coarse_norm = coarse / input_scale
 
-            with torch.cuda.stream(model_stream):
-                torch.cuda.current_stream().wait_stream(LC_stream)
-                delta_v = model.forward(coarse_norm)
+            delta_v = model.forward(coarse_norm)
 
             if not no_segment:
-                with torch.cuda.stream(mask_stream):
-                    torch.cuda.current_stream().wait_stream(LC_stream)
-                    mask = get_mask(coarse_norm, seg_model)
-                    torch.cuda.current_stream().wait_stream(model_stream)
-                    delta_v = delta_v.masked_fill(mask, 0)
+                mask = get_mask(coarse_norm, seg_model)
+                delta_v = delta_v.masked_fill(mask, 0)
 
-            torch.cuda.synchronize()
             coarse += delta_v*output_scale
             coarse = coarse.squeeze_()
             v_LC_coarse = tensor_to_grid(coarse.transpose(0,1), LC_coarse_grid, v_LC_coarse)
