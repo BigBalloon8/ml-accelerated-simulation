@@ -76,6 +76,14 @@ def getAct(name, structure=None):
         return shifted_sigmoid
     elif name.lower() == "img_softmax":
         return partial(torch.softmax, dim=1)
+        from torch.nn.functional import leaky_relu_
+        return leaky_relu_
+    elif name.lower() == "rrelu":
+        from torch.nn.functional import rrelu_
+        return rrelu_
+    elif name.lower() == "silu":
+        from torch.nn.functional import silu
+        return silu
     else:
         raise ValueError(f"Activation function [{name}] not defined")
 
@@ -129,9 +137,15 @@ def getModel(config, name=None):
     elif name == "TRANSFORMER":
         from .Transformer import Transformer
         return Transformer(config)
-    elif name == "KAN":
-        from .KAN import KAN
-        return KAN(config)
+    elif name == "LEARNABLEPOSTRANSFORMER":
+        from .Transformer import LearnablePosTransformer
+        return LearnablePosTransformer(config)
+    elif name == "FASTKANCONV":
+        from .FastKANConv import FastKANConvND
+        return FastKANConvND(config)
+    elif name == "FASTKAN":
+        from .FastKAN import FastKAN
+        return FastKAN(config)
     elif name == "SMARTCONV":
         from .SmartCNN import SmartCNN
         return SmartCNN(config)
@@ -158,6 +172,7 @@ def getModel(config, name=None):
         return FC(config)
     else:
         raise ValueError(f"Model Name [{name}] not defined")
+
     
 
 def getLayers(model):
